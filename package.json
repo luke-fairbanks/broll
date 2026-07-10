@@ -1,0 +1,49 @@
+{
+  "name": "backlot-mcp",
+  "version": "0.1.0",
+  "description": "The content studio MCP for coding agents — BYO-key generation, deterministic video/carousel rendering, draft-first social publishing.",
+  "type": "module",
+  "license": "MIT",
+  "bin": {
+    "backlot-mcp": "dist/index.js"
+  },
+  "main": "dist/index.js",
+  "files": [
+    "dist",
+    "assets"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx src/index.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "smoke": "tsx scripts/smoke.ts"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "content",
+    "video",
+    "ffmpeg",
+    "social-media",
+    "agents",
+    "claude"
+  ],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "execa": "^9.6.1",
+    "sharp": "^0.35.3",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@rolldown/binding-darwin-arm64": "^1.1.5",
+    "@types/node": "^26.1.1",
+    "tsx": "^4.23.0",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
+  }
+}

@@ -1,6 +1,6 @@
-# Backlot workflow prompts
+# broll workflow prompts
 
-Things to say to Claude Code once Backlot is connected. Start every session's first content task with `backlot_status` (agents usually do this on their own).
+Things to say to Claude Code once broll is connected. Start every session's first content task with `broll_status` (agents usually do this on their own).
 
 ## Daily carousel
 

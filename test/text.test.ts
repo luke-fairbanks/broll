@@ -35,7 +35,7 @@ describe('charsPerLine', () => {
 
 describe('isFilterSafePath', () => {
   it('accepts boring workspace paths', () => {
-    expect(isFilterSafePath('/Users/luke/.backlot/tmp/rnd_1/txt_0.txt')).toBe(true);
+    expect(isFilterSafePath('/Users/luke/.broll/tmp/rnd_1/txt_0.txt')).toBe(true);
   });
 
   it('rejects paths with spaces, quotes, colons, commas', () => {

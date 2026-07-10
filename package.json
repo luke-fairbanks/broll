@@ -1,11 +1,11 @@
 {
-  "name": "backlot-mcp",
+  "name": "broll-mcp",
   "version": "0.1.0",
   "description": "The content studio MCP for coding agents — BYO-key generation, deterministic video/carousel rendering, draft-first social publishing.",
   "type": "module",
   "license": "MIT",
   "bin": {
-    "backlot-mcp": "dist/index.js"
+    "broll-mcp": "dist/index.js"
   },
   "main": "dist/index.js",
   "files": [

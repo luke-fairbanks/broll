@@ -12,11 +12,11 @@ export interface FfmpegRunner {
 }
 
 export function resolveFfmpegBinary(env: NodeJS.ProcessEnv = process.env): string {
-  return env.BACKLOT_FFMPEG ?? 'ffmpeg';
+  return env.BROLL_FFMPEG ?? 'ffmpeg';
 }
 
 export function resolveFfprobeBinary(env: NodeJS.ProcessEnv = process.env): string {
-  return env.BACKLOT_FFPROBE ?? 'ffprobe';
+  return env.BROLL_FFPROBE ?? 'ffprobe';
 }
 
 export class ExecaFfmpegRunner implements FfmpegRunner {
@@ -48,7 +48,7 @@ function toFfmpegError(error: unknown, args: string[], tool = 'ffmpeg'): Error {
   const e = error as { stderr?: string; shortMessage?: string; code?: string };
   if (e.code === 'ENOENT') {
     return new Error(
-      `${tool} binary not found. Install ffmpeg (e.g. \`brew install ffmpeg\`) or set BACKLOT_FFMPEG / BACKLOT_FFPROBE.`,
+      `${tool} binary not found. Install ffmpeg (e.g. \`brew install ffmpeg\`) or set BROLL_FFMPEG / BROLL_FFPROBE.`,
     );
   }
   const stderrTail = (e.stderr ?? '').split('\n').filter(Boolean).slice(-8).join('\n');

@@ -12,7 +12,7 @@ const ASPECT_RATIO: Record<ImageGenRequest['aspect'], string> = {
 /**
  * Google provider: Imagen for stills, Veo for video. Veo runs as a
  * long-running operation that is polled until done. Video generation is
- * expensive — Backlot only ever calls it when the agent explicitly asks.
+ * expensive — broll only ever calls it when the agent explicitly asks.
  */
 export class GeminiProvider implements Provider {
   readonly name = 'gemini';
@@ -36,11 +36,11 @@ export class GeminiProvider implements Provider {
   }
 
   private get imageModel(): string {
-    return this.env.BACKLOT_GEMINI_IMAGE_MODEL ?? 'imagen-4.0-generate-001';
+    return this.env.BROLL_GEMINI_IMAGE_MODEL ?? 'imagen-4.0-generate-001';
   }
 
   private get videoModel(): string {
-    return this.env.BACKLOT_GEMINI_VIDEO_MODEL ?? 'veo-3.0-generate-001';
+    return this.env.BROLL_GEMINI_VIDEO_MODEL ?? 'veo-3.0-generate-001';
   }
 
   async generateImages(req: ImageGenRequest): Promise<GeneratedMedia[]> {
@@ -60,7 +60,7 @@ export class GeminiProvider implements Provider {
     };
     const predictions = (json.predictions ?? []).filter((p) => p.bytesBase64Encoded);
     if (predictions.length === 0) {
-      throw new Error('Gemini returned no image data. Check BACKLOT_GEMINI_IMAGE_MODEL and your API access.');
+      throw new Error('Gemini returned no image data. Check BROLL_GEMINI_IMAGE_MODEL and your API access.');
     }
     return predictions.map((p) => ({
       data: Buffer.from(p.bytesBase64Encoded!, 'base64'),

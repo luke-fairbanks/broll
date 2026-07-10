@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "backlot": {
+    "broll": {
       "command": "node",
       "args": ["dist/index.js"]
     }

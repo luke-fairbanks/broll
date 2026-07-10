@@ -7,7 +7,7 @@ import type { PlatformAdapter, PostDraft, ResolvedMedia } from './types.js';
 /**
  * Bluesky is the one network a developer can post to five minutes after
  * signing up — no app review, just a handle and an app password — which
- * makes it Backlot's reference live adapter.
+ * makes it broll's reference live adapter.
  */
 
 interface Facet {
@@ -60,7 +60,7 @@ export async function fitImageToLimit(filePath: string, limitBytes = 1_000_000):
 export class BlueskyAdapter implements PlatformAdapter {
   readonly platform = 'bluesky' as const;
   readonly configHelp =
-    'Set BLUESKY_IDENTIFIER (your handle, e.g. backlot.bsky.social) and BLUESKY_APP_PASSWORD ' +
+    'Set BLUESKY_IDENTIFIER (your handle, e.g. broll.bsky.social) and BLUESKY_APP_PASSWORD ' +
     '(Settings → App Passwords — never your real password).';
 
   constructor(

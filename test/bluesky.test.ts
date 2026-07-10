@@ -9,13 +9,13 @@ import type { PostDraft } from '../src/social/types.js';
 describe('detectLinkFacets', () => {
   it('computes UTF-8 byte offsets, not code-unit offsets', () => {
     // “émoji 🎬 ” before the URL forces byte offsets ≠ char offsets
-    const text = 'émoji 🎬 https://backlot.dev docs';
+    const text = 'émoji 🎬 https://broll.dev docs';
     const facets = detectLinkFacets(text);
     expect(facets).toHaveLength(1);
     const prefixBytes = Buffer.byteLength('émoji 🎬 ', 'utf8');
     expect(facets[0]!.index.byteStart).toBe(prefixBytes);
-    expect(facets[0]!.index.byteEnd).toBe(prefixBytes + Buffer.byteLength('https://backlot.dev', 'utf8'));
-    expect(facets[0]!.features[0]!.uri).toBe('https://backlot.dev');
+    expect(facets[0]!.index.byteEnd).toBe(prefixBytes + Buffer.byteLength('https://broll.dev', 'utf8'));
+    expect(facets[0]!.features[0]!.uri).toBe('https://broll.dev');
   });
 
   it('strips trailing punctuation from detected URLs', () => {
@@ -35,7 +35,7 @@ describe('detectLinkFacets', () => {
 describe('fitImageToLimit', () => {
   let dir: string;
   beforeAll(() => {
-    dir = mkdtempSync(path.join(tmpdir(), 'backlot-bsky-'));
+    dir = mkdtempSync(path.join(tmpdir(), 'broll-bsky-'));
   });
   afterAll(() => {
     rmSync(dir, { recursive: true, force: true });
@@ -67,14 +67,14 @@ describe('fitImageToLimit', () => {
 
 describe('BlueskyAdapter', () => {
   const env = {
-    BLUESKY_IDENTIFIER: 'backlot.bsky.social',
+    BLUESKY_IDENTIFIER: 'broll.bsky.social',
     BLUESKY_APP_PASSWORD: 'app-pass',
   } as NodeJS.ProcessEnv;
 
   const draft: PostDraft = {
     id: 'dr_2',
     createdAt: new Date().toISOString(),
-    text: 'shipping day — https://backlot.dev',
+    text: 'shipping day — https://broll.dev',
     media: [],
     platforms: ['bluesky'],
     status: 'draft',
@@ -87,8 +87,8 @@ describe('BlueskyAdapter', () => {
       const u = String(url);
       calls.push(u);
       if (u.endsWith('createSession')) {
-        expect(JSON.parse(String(init?.body))).toEqual({ identifier: 'backlot.bsky.social', password: 'app-pass' });
-        return new Response(JSON.stringify({ accessJwt: 'jwt', did: 'did:plc:abc', handle: 'backlot.bsky.social' }), {
+        expect(JSON.parse(String(init?.body))).toEqual({ identifier: 'broll.bsky.social', password: 'app-pass' });
+        return new Response(JSON.stringify({ accessJwt: 'jwt', did: 'did:plc:abc', handle: 'broll.bsky.social' }), {
           status: 200,
         });
       }
@@ -110,12 +110,12 @@ describe('BlueskyAdapter', () => {
     const result = await adapter.publish(draft, []);
 
     expect(calls).toHaveLength(2); // no blob upload for text-only
-    expect(result.url).toBe('https://bsky.app/profile/backlot.bsky.social/post/3kxyz');
+    expect(result.url).toBe('https://bsky.app/profile/broll.bsky.social/post/3kxyz');
     expect(result.remoteId).toBe('at://did:plc:abc/app.bsky.feed.post/3kxyz');
   });
 
   it('uploads image blobs and embeds them', async () => {
-    const dir = mkdtempSync(path.join(tmpdir(), 'backlot-bsky-img-'));
+    const dir = mkdtempSync(path.join(tmpdir(), 'broll-bsky-img-'));
     const imgPath = path.join(dir, 'pic.png');
     await sharp({ create: { width: 20, height: 20, channels: 3, background: '#ff0000' } })
       .png()

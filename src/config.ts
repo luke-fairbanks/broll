@@ -2,17 +2,18 @@ import { existsSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import path from 'node:path';
 import { z } from 'zod';
+import { readDotenvFile } from './env.js';
 
 /**
- * Backlot configuration. Sources, in priority order:
+ * broll configuration. Sources, in priority order:
  *   1. Environment variables (keys, workspace override)
- *   2. backlot.config.json in the current working directory
- *   3. backlot.config.json in the workspace root
+ *   2. broll.config.json in the current working directory
+ *   3. broll.config.json in the workspace root
  *   4. Built-in defaults
  */
 
 export const BrandKitSchema = z.object({
-  name: z.string().default('Backlot'),
+  name: z.string().default('broll'),
   handle: z.string().optional(),
   colors: z
     .object({
@@ -44,7 +45,7 @@ export const ConfigFileSchema = z.object({
 export type BrandKit = z.infer<typeof BrandKitSchema>;
 export type ConfigFile = z.infer<typeof ConfigFileSchema>;
 
-export interface BacklotConfig extends ConfigFile {
+export interface BrollConfig extends ConfigFile {
   workspaceDir: string;
   env: NodeJS.ProcessEnv;
   configPath?: string;
@@ -56,13 +57,13 @@ function readConfigFile(file: string): ConfigFile | undefined {
   return ConfigFileSchema.parse(raw);
 }
 
-export function loadConfig(opts: { cwd?: string; env?: NodeJS.ProcessEnv } = {}): BacklotConfig {
+export function loadConfig(opts: { cwd?: string; env?: NodeJS.ProcessEnv } = {}): BrollConfig {
   const cwd = opts.cwd ?? process.cwd();
   const env = opts.env ?? process.env;
 
-  const defaultWorkspace = env.BACKLOT_HOME ?? path.join(homedir(), '.backlot');
+  const defaultWorkspace = env.BROLL_HOME ?? path.join(homedir(), '.broll');
 
-  const candidates = [path.join(cwd, 'backlot.config.json'), path.join(defaultWorkspace, 'backlot.config.json')];
+  const candidates = [path.join(cwd, 'broll.config.json'), path.join(defaultWorkspace, 'broll.config.json')];
 
   let file: ConfigFile | undefined;
   let configPath: string | undefined;
@@ -76,7 +77,17 @@ export function loadConfig(opts: { cwd?: string; env?: NodeJS.ProcessEnv } = {})
   }
 
   const base = file ?? ConfigFileSchema.parse({});
-  const workspaceDir = env.BACKLOT_HOME ?? base.workspace ?? defaultWorkspace;
+  const workspaceDir = env.BROLL_HOME ?? base.workspace ?? defaultWorkspace;
 
-  return { ...base, workspaceDir, env, configPath };
+  // Credentials may live in .env files: the workspace one is the
+  // documented home for keys; a cwd one can override per project; the
+  // real environment always wins. (BROLL_HOME itself must be a real
+  // env var — it decides where to look for .env, so it can't come from one.)
+  const mergedEnv: NodeJS.ProcessEnv = {
+    ...readDotenvFile(path.join(workspaceDir, '.env')),
+    ...readDotenvFile(path.join(cwd, '.env')),
+    ...env,
+  };
+
+  return { ...base, workspaceDir, env: mergedEnv, configPath };
 }

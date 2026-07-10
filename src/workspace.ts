@@ -5,7 +5,7 @@ import type { IdGenerator } from './ids.js';
 import { randomId } from './ids.js';
 
 /**
- * The workspace is Backlot's on-disk state: imported assets, rendered
+ * The workspace is broll's on-disk state: imported assets, rendered
  * outputs, and the post-draft outbox. Everything an agent produces flows
  * through here so results are inspectable files, never hidden state.
  *
@@ -137,7 +137,7 @@ export class Workspace {
 
   /**
    * Resolve a tool argument that may be an asset id or a filesystem path.
-   * Agents can chain Backlot outputs by id, or point at any file they have.
+   * Agents can chain broll outputs by id, or point at any file they have.
    */
   resolvePath(assetOrPath: string): string {
     const asset = this.getAsset(assetOrPath);

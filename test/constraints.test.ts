@@ -39,7 +39,7 @@ describe('validateForPlatform', () => {
     expect(violations.some((v) => v.rule === 'image-count')).toBe(true);
   });
 
-  it('flags video on platforms Backlot cannot upload video to yet', () => {
+  it('flags video on platforms broll cannot upload video to yet', () => {
     const violations = validateForPlatform('bluesky', 'hi', [vid()]);
     expect(violations.some((v) => v.rule === 'video-count')).toBe(true);
   });

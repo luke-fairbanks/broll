@@ -4,6 +4,6 @@ dist/
 .DS_Store
 .env
 .env.*
-.backlot/
+.broll/
 test/.tmp/
 coverage/

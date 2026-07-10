@@ -7,7 +7,7 @@ import type { PlatformAdapter, PostDraft, ResolvedMedia } from './types.js';
 /**
  * X (Twitter) adapter. v2 create-tweet + v1.1 media upload, signed with
  * OAuth 1.0a user context — fiddly, but it works on the free API tier
- * with the user's own app credentials, which fits Backlot's BYO ethos.
+ * with the user's own app credentials, which fits broll's BYO ethos.
  */
 
 export interface OAuth1Credentials {

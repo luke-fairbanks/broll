@@ -1,5 +1,10 @@
-import type { BacklotConfig } from './config.js';
-import { ExecaFfmpegRunner, type FfmpegRunner } from './render/ffmpeg.js';
+import type { BrollConfig } from './config.js';
+import {
+  ExecaFfmpegRunner,
+  resolveFfmpegBinary,
+  resolveFfprobeBinary,
+  type FfmpegRunner,
+} from './render/ffmpeg.js';
 import { Renderer } from './render/renderer.js';
 import { CarouselRenderer } from './render/carousel.js';
 import { GeminiProvider } from './providers/gemini.js';
@@ -17,8 +22,8 @@ import { Workspace } from './workspace.js';
  * Composition root. Everything is constructed here and nowhere else, so
  * tests can assemble the same graph around a temp workspace or fakes.
  */
-export interface Backlot {
-  config: BacklotConfig;
+export interface Broll {
+  config: BrollConfig;
   workspace: Workspace;
   runner: FfmpegRunner;
   renderer: Renderer;
@@ -28,9 +33,10 @@ export interface Backlot {
   publisher: Publisher;
 }
 
-export function createBacklot(config: BacklotConfig, overrides: Partial<Backlot> = {}): Backlot {
+export function createBroll(config: BrollConfig, overrides: Partial<Broll> = {}): Broll {
   const workspace = overrides.workspace ?? new Workspace(config.workspaceDir);
-  const runner = overrides.runner ?? new ExecaFfmpegRunner();
+  const runner =
+    overrides.runner ?? new ExecaFfmpegRunner(resolveFfmpegBinary(config.env), resolveFfprobeBinary(config.env));
   const renderer = overrides.renderer ?? new Renderer(workspace, runner, config.brand, config.env);
   const carousel = overrides.carousel ?? new CarouselRenderer(workspace, config.brand);
   const providers =

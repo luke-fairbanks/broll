@@ -16,12 +16,12 @@ const SYSTEM_FONT_CANDIDATES = [
 
 /**
  * Resolve the font file used for burned-in text. Priority:
- * brand kit font > BACKLOT_FONT env > first available system font.
+ * brand kit font > BROLL_FONT env > first available system font.
  * Returns undefined when nothing is found; drawtext then falls back to
  * fontconfig's default, which is acceptable but less deterministic.
  */
 export function resolveFontFile(brand?: BrandKit, env: NodeJS.ProcessEnv = process.env): string | undefined {
-  const explicit = [brand?.font, env.BACKLOT_FONT].filter((f): f is string => Boolean(f));
+  const explicit = [brand?.font, env.BROLL_FONT].filter((f): f is string => Boolean(f));
   for (const candidate of [...explicit, ...SYSTEM_FONT_CANDIDATES]) {
     if (existsSync(candidate)) return candidate;
   }

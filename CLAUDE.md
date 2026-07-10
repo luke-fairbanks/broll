@@ -1,6 +1,6 @@
-# Backlot — architecture rules
+# broll — architecture rules
 
-Backlot is an MCP server that gives coding agents content-production hands: BYO-key generation, deterministic rendering, draft-first publishing. These rules are binding for all changes.
+broll is an MCP server that gives coding agents content-production hands: BYO-key generation, deterministic rendering, draft-first publishing. These rules are binding for all changes.
 
 ## Non-negotiables
 
@@ -12,12 +12,12 @@ Backlot is an MCP server that gives coding agents content-production hands: BYO-
 
 ## Layout
 
-- `src/config.ts` — env + `backlot.config.json` (brand kit). zod-validated.
+- `src/config.ts` — env + `broll.config.json` (brand kit). zod-validated.
 - `src/workspace.ts` — on-disk state: assets/renders/drafts/tmp + manifest. All tool outputs are inspectable files.
 - `src/render/` — the crown jewel. `plan.ts` compiles declarative RenderPlans to ffmpeg args (pure); `renderer.ts` is the only orchestrator; `ffmpeg.ts` is the only place a process spawns; `carousel.ts` composes slides via sharp+SVG.
 - `src/providers/` — Strategy pattern. `registry.ts` picks explicit → config default → first configured → mock. The mock provider must always keep every workflow runnable keyless.
 - `src/social/` — Adapter pattern per platform + `constraints.ts` (validate before publish) + `drafts.ts` (outbox) + `publisher.ts` (per-platform results, never all-or-nothing).
-- `src/server.ts` — thin MCP tool wrappers only; logic lives in services. `src/backlot.ts` is the composition root.
+- `src/server.ts` — thin MCP tool wrappers only; logic lives in services. `src/broll.ts` is the composition root.
 
 ## Conventions
 

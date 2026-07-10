@@ -55,7 +55,7 @@ export class MockProvider implements Provider {
   async generateVideo(req: VideoGenRequest): Promise<GeneratedMedia> {
     const durationSec = Math.min(req.durationSec ?? 4, 10);
     const size = req.aspect === '9:16' ? '1080x1920' : '1920x1080';
-    const work = mkdtempSync(path.join(tmpdir(), 'backlot-mock-'));
+    const work = mkdtempSync(path.join(tmpdir(), 'broll-mock-'));
     try {
       const textFile = path.join(work, 'prompt.txt');
       writeFileSync(textFile, wrapText(`MOCK: ${req.prompt}`, 32).join('\n'));

@@ -1,20 +1,20 @@
 #!/usr/bin/env node
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { createBacklot } from './backlot.js';
+import { createBroll } from './broll.js';
 import { loadConfig } from './config.js';
 import { buildServer } from './server.js';
 
 async function main(): Promise<void> {
   const config = loadConfig();
-  const backlot = createBacklot(config);
-  const server = buildServer(backlot);
+  const broll = createBroll(config);
+  const server = buildServer(broll);
   const transport = new StdioServerTransport();
   await server.connect(transport);
   // stdout is the MCP protocol channel — all logging goes to stderr.
-  console.error(`backlot-mcp ready — workspace: ${config.workspaceDir}`);
+  console.error(`broll-mcp ready — workspace: ${config.workspaceDir}`);
 }
 
 main().catch((error) => {
-  console.error('backlot-mcp failed to start:', error);
+  console.error('broll-mcp failed to start:', error);
   process.exit(1);
 });

@@ -4,7 +4,7 @@ import path from 'node:path';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { createBacklot } from '../src/backlot.js';
+import { createBroll } from '../src/broll.js';
 import { loadConfig } from '../src/config.js';
 import { buildServer } from '../src/server.js';
 
@@ -23,17 +23,17 @@ function textOf(result: Awaited<ReturnType<Client['callTool']>>): string {
 }
 
 beforeAll(async () => {
-  dir = mkdtempSync(path.join(tmpdir(), 'backlot-mcp-'));
+  dir = mkdtempSync(path.join(tmpdir(), 'broll-mcp-'));
   const config = loadConfig({
     cwd: dir,
-    env: { BACKLOT_HOME: path.join(dir, 'home') } as NodeJS.ProcessEnv, // no keys, no social creds
+    env: { BROLL_HOME: path.join(dir, 'home') } as NodeJS.ProcessEnv, // no keys, no social creds
   });
-  const backlot = createBacklot(config);
-  const server = buildServer(backlot);
+  const broll = createBroll(config);
+  const server = buildServer(broll);
 
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await server.connect(serverTransport);
-  client = new Client({ name: 'backlot-test-client', version: '0.0.1' });
+  client = new Client({ name: 'broll-test-client', version: '0.0.1' });
   await client.connect(clientTransport);
 }, 60_000);
 
@@ -41,13 +41,13 @@ afterAll(() => {
   rmSync(dir, { recursive: true, force: true });
 });
 
-describe('backlot MCP server', () => {
+describe('broll MCP server', () => {
   it('lists the full tool surface', async () => {
     const { tools } = await client.listTools();
     const names = tools.map((t) => t.name).sort();
     expect(names).toEqual(
       [
-        'backlot_status',
+        'broll_status',
         'create_post_draft',
         'extract_frame',
         'generate_image',
@@ -64,7 +64,7 @@ describe('backlot MCP server', () => {
   });
 
   it('reports status with providers and platforms', async () => {
-    const result = await client.callTool({ name: 'backlot_status', arguments: {} });
+    const result = await client.callTool({ name: 'broll_status', arguments: {} });
     const status = JSON.parse(textOf(result));
     expect(status.ffmpeg).toContain('ffmpeg version');
     expect(status.providers.map((p: { name: string }) => p.name)).toEqual(['openai', 'gemini', 'mock']);

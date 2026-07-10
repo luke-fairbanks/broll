@@ -1,5 +1,5 @@
 /**
- * Generation providers are strictly BYO-key: Backlot never proxies or
+ * Generation providers are strictly BYO-key: broll never proxies or
  * marks up inference. A provider is "configured" when its key is in the
  * environment; otherwise the deterministic mock provider keeps every
  * workflow runnable end-to-end.

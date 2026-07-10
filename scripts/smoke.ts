@@ -1,13 +1,13 @@
 /**
  * End-to-end smoke: drives the real MCP server through a real client —
  * exactly what a coding agent does — and leaves inspectable artifacts
- * in ./.backlot. Run with: npm run smoke
+ * in ./.broll. Run with: npm run smoke
  */
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
-import { createBacklot } from '../src/backlot.js';
+import { createBroll } from '../src/broll.js';
 import { loadConfig } from '../src/config.js';
 import { buildServer } from '../src/server.js';
 
@@ -24,16 +24,16 @@ function parse(result: Awaited<ReturnType<Client['callTool']>>): any {
 async function main(): Promise<void> {
   const config = loadConfig({
     cwd: repoRoot,
-    env: { ...process.env, BACKLOT_HOME: path.join(repoRoot, '.backlot') },
+    env: { ...process.env, BROLL_HOME: path.join(repoRoot, '.broll') },
   });
-  const server = buildServer(createBacklot(config));
+  const server = buildServer(createBroll(config));
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await server.connect(serverTransport);
   const client = new Client({ name: 'smoke', version: '0.0.1' });
   await client.connect(clientTransport);
 
   console.log('1/6 status…');
-  const status = parse(await client.callTool({ name: 'backlot_status', arguments: {} }));
+  const status = parse(await client.callTool({ name: 'broll_status', arguments: {} }));
   console.log(`    ffmpeg: ${status.ffmpeg}`);
   console.log(`    providers: ${status.providers.map((p: any) => `${p.name}${p.configured ? '✓' : '✗'}`).join(' ')}`);
 
@@ -41,7 +41,7 @@ async function main(): Promise<void> {
   const gen = parse(
     await client.callTool({
       name: 'generate_image',
-      arguments: { prompt: 'moody film-set backlot at golden hour, cinematic', aspect: 'portrait', provider: 'mock' },
+      arguments: { prompt: 'moody film-set broll at golden hour, cinematic', aspect: 'portrait', provider: 'mock' },
     }),
   );
   const bg = gen.assets[0];
@@ -53,7 +53,7 @@ async function main(): Promise<void> {
       arguments: {
         spec: {
           slides: [
-            { kicker: 'Backlot', headline: 'YOUR AGENT CAN RENDER VIDEO NOW', body: 'MCP tools for generate, edit, and publish.' },
+            { kicker: 'broll', headline: 'YOUR AGENT CAN RENDER VIDEO NOW', body: 'MCP tools for generate, edit, and publish.' },
             { headline: 'Deterministic by design', body: 'Same plan in, same pixels out. The model plans; code renders.' },
             { kicker: 'Slide 3', headline: 'BYO API keys', body: 'Your OpenAI or Gemini keys. No credits. No markup.', backgroundAsset: bg.id },
           ],
@@ -73,7 +73,7 @@ async function main(): Promise<void> {
             { kind: 'color', color: '#101014', durationSec: 2 },
             { kind: 'image', asset: bg.id, durationSec: 3 },
           ],
-          overlays: [{ text: 'BACKLOT', preset: 'title' }],
+          overlays: [{ text: 'BROLL', preset: 'title' }],
           captions: [
             { text: 'the content studio for coding agents', startSec: 0.4, endSec: 2.0 },
             { text: 'rendered by code, not vibes', startSec: 2.2, endSec: 4.6 },
@@ -97,7 +97,7 @@ async function main(): Promise<void> {
     await client.callTool({
       name: 'create_post_draft',
       arguments: {
-        text: 'Backlot exists: MCP tools that let Claude Code generate, render, and publish content. BYO keys. https://github.com/lukefairbanks/backlot',
+        text: 'broll exists: MCP tools that let Claude Code generate, render, and publish content. BYO keys. https://github.com/lukefairbanks/broll',
         media: [carousel.slides[0].id],
         platforms: ['export'],
       },

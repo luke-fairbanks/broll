@@ -23,7 +23,7 @@ export const PLATFORM_RULES: Record<Platform, PlatformRules> = {
     maxImages: 4,
     maxVideos: 0,
     imageMaxBytes: 1_000_000,
-    notes: 'Backlot recompresses oversized images automatically; video upload is on the roadmap.',
+    notes: 'broll recompresses oversized images automatically; video upload is on the roadmap.',
   },
   x: {
     maxChars: 280,
@@ -109,7 +109,7 @@ export function validateForPlatform(platform: Platform, text: string, media: Res
       rule: 'video-count',
       message:
         rules.maxVideos === 0
-          ? `${platform} video posting is not supported by Backlot yet.`
+          ? `${platform} video posting is not supported by broll yet.`
           : `${videos.length} videos attached; ${platform} allows ${rules.maxVideos}.`,
     });
   }

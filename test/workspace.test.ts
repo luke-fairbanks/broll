@@ -9,7 +9,7 @@ let dir: string;
 let ws: Workspace;
 
 beforeEach(() => {
-  dir = mkdtempSync(path.join(tmpdir(), 'backlot-ws-'));
+  dir = mkdtempSync(path.join(tmpdir(), 'broll-ws-'));
   ws = new Workspace(path.join(dir, 'workspace'), { idGenerator: sequentialIds() });
 });
 

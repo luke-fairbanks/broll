@@ -11,10 +11,10 @@ import { Workspace } from '../src/workspace.js';
 let dir: string;
 let ws: Workspace;
 let renderer: CarouselRenderer;
-const brand = BrandKitSchema.parse({ name: 'Backlot', handle: '@backlot' });
+const brand = BrandKitSchema.parse({ name: 'broll', handle: '@broll' });
 
 beforeAll(() => {
-  dir = mkdtempSync(path.join(tmpdir(), 'backlot-carousel-'));
+  dir = mkdtempSync(path.join(tmpdir(), 'broll-carousel-'));
   ws = new Workspace(path.join(dir, 'ws'), { idGenerator: sequentialIds() });
   renderer = new CarouselRenderer(ws, brand);
 });
@@ -36,7 +36,7 @@ describe('slideOverlaySvg', () => {
 
   it('includes handle and page label when provided', () => {
     const svg = slideOverlaySvg({ headline: 'Hi' }, { width: 1080, height: 1350, brand, pageLabel: '2/5' });
-    expect(svg).toContain('@backlot');
+    expect(svg).toContain('@broll');
     expect(svg).toContain('2/5');
   });
 });
@@ -45,7 +45,7 @@ describe('CarouselRenderer', () => {
   it('renders slides at exact 4:5 dimensions with visible text', async () => {
     const spec = CarouselSpecSchema.parse({
       slides: [
-        { kicker: 'Backlot', headline: 'WILL AI KILL YOUR CONTENT?', body: 'No. But it will render it.' },
+        { kicker: 'broll', headline: 'WILL AI KILL YOUR CONTENT?', body: 'No. But it will render it.' },
         { headline: 'Slide two' },
       ],
     });

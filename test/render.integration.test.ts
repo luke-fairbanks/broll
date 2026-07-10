@@ -25,7 +25,7 @@ let imagePath: string;
 let musicPath: string;
 
 beforeAll(async () => {
-  dir = mkdtempSync(path.join(tmpdir(), 'backlot-int-'));
+  dir = mkdtempSync(path.join(tmpdir(), 'broll-int-'));
   ws = new Workspace(path.join(dir, 'ws'), { idGenerator: sequentialIds() });
   renderer = new Renderer(ws, runner, BrandKitSchema.parse({}));
 
@@ -67,7 +67,7 @@ describe('Renderer (real ffmpeg)', () => {
         { kind: 'video', asset: clip.id, trimStartSec: 0.5, trimEndSec: 1.5 },
         { kind: 'image', asset: still.id, durationSec: 1 },
       ],
-      overlays: [{ text: 'Backlot renders deterministically', preset: 'title' }],
+      overlays: [{ text: 'broll renders deterministically', preset: 'title' }],
       captions: [
         { text: 'first caption', startSec: 0.2, endSec: 1.0 },
         { text: 'second caption', startSec: 1.2, endSec: 2.4 },

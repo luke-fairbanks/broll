@@ -2,7 +2,7 @@
  * Deterministic text layout for burned-in captions and overlays.
  *
  * ffmpeg's drawtext does not wrap text, and escaping arbitrary strings
- * inside a filtergraph is a reliability tar pit. Backlot sidesteps both:
+ * inside a filtergraph is a reliability tar pit. broll sidesteps both:
  * text is wrapped here in code and written to id-named textfiles whose
  * paths contain no characters that need escaping.
  */

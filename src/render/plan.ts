@@ -5,8 +5,8 @@ import type { MediaInfo } from './probe.js';
 import { wrapForFrame } from './text.js';
 
 /**
- * RenderPlan is Backlot's core idea made concrete: an agent describes a
- * video declaratively; Backlot compiles it to an exact ffmpeg invocation.
+ * RenderPlan is broll's core idea made concrete: an agent describes a
+ * video declaratively; broll compiles it to an exact ffmpeg invocation.
  * Same plan + same inputs = same output. All "creative drift" lives in
  * the model's plan, never in the rendering.
  */

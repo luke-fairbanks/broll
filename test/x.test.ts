@@ -48,7 +48,7 @@ describe('XAdapter', () => {
   const draft: PostDraft = {
     id: 'dr_1',
     createdAt: new Date().toISOString(),
-    text: 'hello from backlot',
+    text: 'hello from broll',
     media: [],
     platforms: ['x'],
     status: 'draft',
@@ -66,7 +66,7 @@ describe('XAdapter', () => {
       const headers = init?.headers as Record<string, string>;
       expect(headers.Authorization).toMatch(/^OAuth /);
       expect(headers.Authorization).toContain('oauth_consumer_key="ck"');
-      expect(JSON.parse(String(init?.body))).toEqual({ text: 'hello from backlot' });
+      expect(JSON.parse(String(init?.body))).toEqual({ text: 'hello from broll' });
       return new Response(JSON.stringify({ data: { id: '1234567890' } }), { status: 201 });
     });
 

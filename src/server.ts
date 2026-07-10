@@ -1,7 +1,7 @@
 import { writeFileSync } from 'node:fs';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import type { Backlot } from './backlot.js';
+import type { Broll } from './broll.js';
 import { ffmpegVersion } from './render/ffmpeg.js';
 import { probeMedia } from './render/probe.js';
 import { CarouselSpecSchema } from './render/carousel.js';
@@ -30,14 +30,14 @@ async function guard(fn: () => Promise<ToolResult> | ToolResult): Promise<ToolRe
   }
 }
 
-export function buildServer(backlot: Backlot): McpServer {
-  const server = new McpServer({ name: 'backlot', version: VERSION });
-  const { workspace, renderer, carousel, providers, drafts, publisher, runner, config } = backlot;
+export function buildServer(broll: Broll): McpServer {
+  const server = new McpServer({ name: 'broll', version: VERSION });
+  const { workspace, renderer, carousel, providers, drafts, publisher, runner, config } = broll;
 
   server.registerTool(
-    'backlot_status',
+    'broll_status',
     {
-      title: 'Backlot status',
+      title: 'broll status',
       description:
         'Report workspace location, ffmpeg availability, configured generation providers, and social platform readiness. Call this first to see what is possible.',
       inputSchema: {},
@@ -47,9 +47,9 @@ export function buildServer(backlot: Backlot): McpServer {
         json({
           version: VERSION,
           workspace: workspace.root,
-          configFile: config.configPath ?? 'none (using defaults — create backlot.config.json to set your brand)',
+          configFile: config.configPath ?? 'none (using defaults — create broll.config.json to set your brand)',
           brand: config.brand,
-          ffmpeg: (await ffmpegVersion(runner)) ?? 'NOT FOUND — install ffmpeg or set BACKLOT_FFMPEG',
+          ffmpeg: (await ffmpegVersion(runner)) ?? 'NOT FOUND — install ffmpeg or set BROLL_FFMPEG',
           providers: providers.statuses(),
           platforms: publisher.adapterStatus(),
           assets: workspace.listAssets().length,
@@ -117,7 +117,7 @@ export function buildServer(backlot: Backlot): McpServer {
     'import_asset',
     {
       title: 'Import asset',
-      description: 'Copy a local file (image/video/audio) into the Backlot workspace and get an asset id for it.',
+      description: 'Copy a local file (image/video/audio) into the broll workspace and get an asset id for it.',
       inputSchema: {
         path: z.string().describe('Absolute path to the file'),
         label: z.string().optional(),

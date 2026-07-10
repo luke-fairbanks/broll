@@ -6,7 +6,7 @@ import { PostDraftSchema, type Platform, type PostDraft, type PublishResult } fr
 /**
  * The outbox. Drafts are plain JSON files a human can open, diff, and
  * delete. Nothing is ever published that isn't first a reviewable file
- * on disk — that is Backlot's core safety property.
+ * on disk — that is broll's core safety property.
  */
 export class DraftStore {
   constructor(private readonly workspace: Workspace) {}

@@ -23,7 +23,7 @@ export class OpenAiProvider implements Provider {
   }
 
   private get model(): string {
-    return this.env.BACKLOT_OPENAI_IMAGE_MODEL ?? 'gpt-image-1';
+    return this.env.BROLL_OPENAI_IMAGE_MODEL ?? 'gpt-image-1';
   }
 
   async generateImages(req: ImageGenRequest): Promise<GeneratedMedia[]> {

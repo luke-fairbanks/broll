@@ -1,3 +1,6 @@
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import { buildOAuth1Header, percentEncode, XAdapter } from '../src/social/x.js';
 import type { PostDraft } from '../src/social/types.js';
@@ -125,5 +128,51 @@ describe('XAdapter', () => {
     const fetchMock = vi.fn(async () => new Response('{"detail":"Forbidden"}', { status: 403 }));
     const adapter = new XAdapter(env, fetchMock as unknown as typeof fetch);
     await expect(adapter.publish(draft, [[]])).rejects.toThrow(/403.*Forbidden/s);
+  });
+
+  it('uploads images via the v2 media endpoint and attaches media_ids', async () => {
+    const dir = mkdtempSync(path.join(tmpdir(), 'broll-x-img-'));
+    const imgPath = path.join(dir, 'slide.png');
+    writeFileSync(imgPath, 'png-bytes');
+
+    const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      const u = String(url);
+      if (u === 'https://api.x.com/2/media/upload') {
+        expect(init?.body).toBeInstanceOf(FormData);
+        const form = init?.body as FormData;
+        expect(form.get('media_category')).toBe('tweet_image');
+        return new Response(JSON.stringify({ data: { id: 'media_777' } }), { status: 200 });
+      }
+      if (u === 'https://api.x.com/2/tweets') {
+        const body = JSON.parse(String(init?.body));
+        expect(body.media).toEqual({ media_ids: ['media_777'] });
+        return new Response(JSON.stringify({ data: { id: '555' } }), { status: 201 });
+      }
+      throw new Error(`unexpected: ${u}`);
+    });
+
+    const adapter = new XAdapter(env, fetchMock as unknown as typeof fetch);
+    const result = await adapter.publish(draft, [[{ path: imgPath, kind: 'image', sizeBytes: 9 }]]);
+    expect(result.remoteId).toBe('555');
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('explains the read-only-token trap on oauth1-permissions 403s', async () => {
+    const dir = mkdtempSync(path.join(tmpdir(), 'broll-x-perm-'));
+    const imgPath = path.join(dir, 'slide.png');
+    writeFileSync(imgPath, 'png-bytes');
+
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({ title: 'Forbidden', status: 403, type: 'https://api.twitter.com/2/problems/oauth1-permissions' }),
+          { status: 403 },
+        ),
+    );
+    const adapter = new XAdapter(env, fetchMock as unknown as typeof fetch);
+    await expect(adapter.publish(draft, [[{ path: imgPath, kind: 'image', sizeBytes: 9 }]])).rejects.toThrow(
+      /Read and write.*regenerate/s,
+    );
+    rmSync(dir, { recursive: true, force: true });
   });
 });

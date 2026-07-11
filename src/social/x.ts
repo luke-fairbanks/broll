@@ -1,13 +1,16 @@
 import { createHmac, randomBytes } from 'node:crypto';
 import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import type { FetchLike } from '../providers/types.js';
 import { readErrorBody } from '../providers/types.js';
 import type { PlatformAdapter, PostDraft, ResolvedMedia } from './types.js';
 
 /**
- * X (Twitter) adapter. v2 create-tweet + v1.1 media upload, signed with
+ * X (Twitter) adapter. v2 create-tweet + v2 media upload, signed with
  * OAuth 1.0a user context — fiddly, but it works on the free API tier
  * with the user's own app credentials, which fits broll's BYO ethos.
+ * The app must have "Read and write" permission and tokens generated
+ * AFTER that permission was set.
  */
 
 export interface OAuth1Credentials {
@@ -71,7 +74,6 @@ export class XAdapter implements PlatformAdapter {
     private readonly env: NodeJS.ProcessEnv = process.env,
     private readonly fetchImpl: FetchLike = globalThis.fetch,
     private readonly apiBase = 'https://api.x.com',
-    private readonly uploadBase = 'https://upload.twitter.com',
   ) {}
 
   isConfigured(): boolean {
@@ -101,21 +103,30 @@ export class XAdapter implements PlatformAdapter {
   }
 
   private async uploadImage(media: ResolvedMedia): Promise<string> {
-    const url = `${this.uploadBase}/1.1/media/upload.json`;
+    // v2 media upload — the legacy upload.twitter.com/1.1 endpoint returns
+    // blank 403s on current API tiers.
+    const url = `${this.apiBase}/2/media/upload`;
     const form = new FormData();
     // multipart bodies are excluded from the OAuth 1.0a signature base string
-    form.append('media_data', readFileSync(media.path).toString('base64'));
+    const bytes = readFileSync(media.path);
+    form.append('media', new Blob([new Uint8Array(bytes)], { type: 'image/png' }), path.basename(media.path));
+    form.append('media_category', 'tweet_image');
     const res = await this.fetchImpl(url, {
       method: 'POST',
       headers: { Authorization: this.authHeader('POST', url) },
       body: form,
     });
     if (!res.ok) {
-      throw new Error(`X media upload failed (${res.status}): ${await readErrorBody(res)}`);
+      const body = await readErrorBody(res);
+      const hint = body.includes('oauth1-permissions')
+        ? ' Your app’s access token is read-only: set the app to "Read and write" in the X developer portal, regenerate the Access Token & Secret, and update X_ACCESS_TOKEN / X_ACCESS_TOKEN_SECRET.'
+        : '';
+      throw new Error(`X media upload failed (${res.status}): ${body}${hint}`);
     }
-    const json = (await res.json()) as { media_id_string?: string };
-    if (!json.media_id_string) throw new Error('X media upload returned no media_id_string.');
-    return json.media_id_string;
+    const json = (await res.json()) as { data?: { id?: string; media_key?: string }; media_id_string?: string };
+    const id = json.data?.id ?? json.media_id_string;
+    if (!id) throw new Error('X media upload returned no media id.');
+    return id;
   }
 
   /** Multi-segment drafts publish as a reply-chained thread under the first tweet. */

@@ -157,6 +157,18 @@ describe('XAdapter', () => {
     rmSync(dir, { recursive: true, force: true });
   });
 
+  it('explains pay-per-use credits on 402s and points at the export fallback', async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({ title: 'CreditsDepleted', status: 402, type: 'https://api.twitter.com/2/problems/credits' }),
+          { status: 402 },
+        ),
+    );
+    const adapter = new XAdapter(env, fetchMock as unknown as typeof fetch);
+    await expect(adapter.publish(draft, [[]])).rejects.toThrow(/pay-per-use.*export/s);
+  });
+
   it('explains the read-only-token trap on oauth1-permissions 403s', async () => {
     const dir = mkdtempSync(path.join(tmpdir(), 'broll-x-perm-'));
     const imgPath = path.join(dir, 'slide.png');

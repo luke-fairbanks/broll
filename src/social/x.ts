@@ -64,6 +64,23 @@ export function buildOAuth1Header(input: OAuth1SignatureInput): string {
   return `OAuth ${header}`;
 }
 
+/** Translate X's most common API-policy errors into next steps. */
+export function xErrorHint(body: string): string {
+  if (body.includes('oauth1-permissions')) {
+    return (
+      ' Your app’s access token is read-only: set the app to "Read and write" in the X developer portal, ' +
+      'regenerate the Access Token & Secret, and update X_ACCESS_TOKEN / X_ACCESS_TOKEN_SECRET.'
+    );
+  }
+  if (body.includes('problems/credits') || body.includes('CreditsDepleted')) {
+    return (
+      ' X API write access is pay-per-use (2026 pricing): fund credits in the X developer portal, ' +
+      'or target the "export" platform instead — broll writes a ready-to-post bundle you can post from the X app for free.'
+    );
+  }
+  return '';
+}
+
 export class XAdapter implements PlatformAdapter {
   readonly platform = 'x' as const;
   readonly configHelp =
@@ -118,10 +135,7 @@ export class XAdapter implements PlatformAdapter {
     });
     if (!res.ok) {
       const body = await readErrorBody(res);
-      const hint = body.includes('oauth1-permissions')
-        ? ' Your app’s access token is read-only: set the app to "Read and write" in the X developer portal, regenerate the Access Token & Secret, and update X_ACCESS_TOKEN / X_ACCESS_TOKEN_SECRET.'
-        : '';
-      throw new Error(`X media upload failed (${res.status}): ${body}${hint}`);
+      throw new Error(`X media upload failed (${res.status}): ${body}${xErrorHint(body)}`);
     }
     const json = (await res.json()) as { data?: { id?: string; media_key?: string }; media_id_string?: string };
     const id = json.data?.id ?? json.media_id_string;
@@ -156,7 +170,8 @@ export class XAdapter implements PlatformAdapter {
         body: JSON.stringify(body),
       });
       if (!res.ok) {
-        const detail = `X create tweet failed (${res.status}): ${await readErrorBody(res)}`;
+        const errBody = await readErrorBody(res);
+        const detail = `X create tweet failed (${res.status}): ${errBody}${xErrorHint(errBody)}`;
         if (rootId) {
           throw new Error(
             `Thread broke at post ${i + 1}/${draft.posts.length} (${posted} published, root ${rootId}): ${detail}`,

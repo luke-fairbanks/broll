@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="380" viewBox="0 0 1024 380">
+  <!-- broll wordmark. Rasterized with Helvetica Neue; regenerate PNG via assets pipeline. -->
+  <rect x="34" y="40" width="118" height="24" fill="#E4572E"/>
+  <text x="28" y="280" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="230" font-weight="800" fill="#FFFFFF">broll</text>
+  <circle cx="568" cy="256" r="25" fill="#E4572E"/>
+</svg>

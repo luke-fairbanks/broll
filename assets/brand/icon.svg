@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- broll icon — play triangle with record dot. Deterministic vector; regenerate PNGs from this file. -->
+  <rect width="1024" height="1024" fill="#101014"/>
+  <path d="M 340 280 L 340 744 L 744 512 Z" fill="none" stroke="#E4572E" stroke-width="112" stroke-linejoin="round"/>
+  <circle cx="474" cy="512" r="60" fill="#E4572E"/>
+</svg>

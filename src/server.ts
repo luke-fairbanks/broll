@@ -32,19 +32,21 @@ async function guard(fn: () => Promise<ToolResult> | ToolResult): Promise<ToolRe
 
 export function buildServer(broll: Broll): McpServer {
   const server = new McpServer({ name: 'broll', version: VERSION });
-  const { workspace, renderer, carousel, providers, drafts, publisher, runner, config } = broll;
+  const { workspace, renderer, carousel, providers, drafts, publisher, runner, config, bluesky, xAdapter } = broll;
 
   server.registerTool(
     'broll_status',
     {
       title: 'broll status',
       description:
-        'Report workspace location, ffmpeg availability, configured generation providers, and social platform readiness. Call this first to see what is possible.',
-      inputSchema: {},
+        'Report workspace location, ffmpeg availability, configured generation providers, and social platform readiness. Call this first to see what is possible. Pass probe: true to live-verify social credentials (makes real authenticated API calls, posts nothing).',
+      inputSchema: {
+        probe: z.boolean().default(false).describe('Live-verify social platform credentials (no posts are made)'),
+      },
     },
-    async () =>
-      guard(async () =>
-        json({
+    async ({ probe }) =>
+      guard(async () => {
+        const status: Record<string, unknown> = {
           version: VERSION,
           workspace: workspace.root,
           configFile: config.configPath ?? 'none (using defaults — create broll.config.json to set your brand)',
@@ -54,8 +56,17 @@ export function buildServer(broll: Broll): McpServer {
           platforms: publisher.adapterStatus(),
           assets: workspace.listAssets().length,
           drafts: drafts.list().length,
-        }),
-      ),
+        };
+        if (probe) {
+          const probes: Record<string, { ok: boolean; detail: string }> = {};
+          if (bluesky.isConfigured()) probes.bluesky = await bluesky.probe();
+          if (xAdapter.isConfigured()) probes.x = await xAdapter.probe();
+          status.credentialProbes = Object.keys(probes).length
+            ? probes
+            : 'no live platforms configured — nothing to probe';
+        }
+        return json(status);
+      }),
   );
 
   server.registerTool(
@@ -193,7 +204,7 @@ export function buildServer(broll: Broll): McpServer {
     },
     async ({ text, media, platforms }) =>
       guard(async () => {
-        const draft = drafts.create({ text, media, platforms });
+        const draft = drafts.create({ posts: [{ text, media }], platforms });
         const violations = publisher.validate(draft);
         return json({
           draft,
@@ -203,6 +214,68 @@ export function buildServer(broll: Broll): McpServer {
               ? 'Draft saved but has violations — fix them (create a new draft) before publish_post.'
               : 'Draft saved. Publish with publish_post({ draftId, confirm: true }).',
         });
+      }),
+  );
+
+  server.registerTool(
+    'create_thread_draft',
+    {
+      title: 'Create thread draft',
+      description:
+        'Create a multi-post thread draft. On publish, posts chain as replies under the first one (Bluesky reply refs, X in_reply_to). Each post has its own text and up to 4 images, validated per platform. Nothing is published until publish_post with confirm: true.',
+      inputSchema: {
+        posts: z
+          .array(z.object({ text: z.string().min(1), media: z.array(z.string()).default([]) }))
+          .min(2)
+          .max(25),
+        platforms: z.array(PlatformSchema).min(1),
+      },
+    },
+    async ({ posts, platforms }) =>
+      guard(async () => {
+        const draft = drafts.create({ posts, platforms });
+        const violations = publisher.validate(draft);
+        return json({
+          draft,
+          violations,
+          note:
+            violations.length > 0
+              ? 'Thread draft saved but has violations — fix them before publish_post.'
+              : `Thread draft saved (${posts.length} posts). Publish with publish_post({ draftId, confirm: true }).`,
+        });
+      }),
+  );
+
+  server.registerTool(
+    'set_profile',
+    {
+      title: 'Set profile',
+      description:
+        'Update the Bluesky profile (display name, bio, avatar image) — merges with the existing profile, never clobbers other fields. Requires confirm: true because it changes the public account.',
+      inputSchema: {
+        displayName: z.string().max(64).optional(),
+        bio: z.string().max(256).optional(),
+        avatarAsset: z.string().optional().describe('Asset id or absolute path of an image'),
+        confirm: z.boolean().describe('Must be true. Confirms the user explicitly approved this profile change.'),
+      },
+    },
+    async ({ displayName, bio, avatarAsset, confirm }) =>
+      guard(async () => {
+        if (confirm !== true) {
+          return fail('set_profile requires confirm: true. Ask the user to approve the profile change first.');
+        }
+        if (!bluesky.isConfigured()) {
+          return fail(`Bluesky is not configured. ${bluesky.configHelp}`);
+        }
+        if (displayName === undefined && bio === undefined && !avatarAsset) {
+          return fail('Nothing to change — pass displayName, bio, and/or avatarAsset.');
+        }
+        await bluesky.setProfile({
+          displayName,
+          description: bio,
+          avatarPath: avatarAsset ? workspace.resolvePath(avatarAsset) : undefined,
+        });
+        return json({ ok: true, updated: { displayName, bio, avatarAsset } });
       }),
   );
 
@@ -227,9 +300,13 @@ export function buildServer(broll: Broll): McpServer {
         confirm: z
           .boolean()
           .describe('Must be true. Confirms the user explicitly approved publishing this draft now.'),
+        platforms: z
+          .array(PlatformSchema)
+          .optional()
+          .describe('Publish to only this subset of the draft’s platforms (e.g. test one network first).'),
       },
     },
-    async ({ draftId, confirm }) =>
+    async ({ draftId, confirm, platforms }) =>
       guard(async () => {
         if (confirm !== true) {
           return fail(
@@ -240,7 +317,7 @@ export function buildServer(broll: Broll): McpServer {
         if (violations.length > 0) {
           return fail(`Draft has constraint violations: ${violations.map((v) => `[${v.platform}] ${v.message}`).join(' ')}`);
         }
-        return json(await publisher.publish(draftId));
+        return json(await publisher.publish(draftId, { platforms }));
       }),
   );
 

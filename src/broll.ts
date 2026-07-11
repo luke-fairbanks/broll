@@ -31,6 +31,8 @@ export interface Broll {
   providers: ProviderRegistry;
   drafts: DraftStore;
   publisher: Publisher;
+  bluesky: BlueskyAdapter;
+  xAdapter: XAdapter;
 }
 
 export function createBroll(config: BrollConfig, overrides: Partial<Broll> = {}): Broll {
@@ -46,13 +48,10 @@ export function createBroll(config: BrollConfig, overrides: Partial<Broll> = {})
       { image: config.defaults.imageProvider, video: config.defaults.videoProvider },
     );
   const drafts = overrides.drafts ?? new DraftStore(workspace);
+  const bluesky = overrides.bluesky ?? new BlueskyAdapter(config.env);
+  const xAdapter = overrides.xAdapter ?? new XAdapter(config.env);
   const publisher =
-    overrides.publisher ??
-    new Publisher(workspace, drafts, [
-      new BlueskyAdapter(config.env),
-      new XAdapter(config.env),
-      new ExportAdapter(workspace),
-    ]);
+    overrides.publisher ?? new Publisher(workspace, drafts, [bluesky, xAdapter, new ExportAdapter(workspace)]);
 
-  return { config, workspace, runner, renderer, carousel, providers, drafts, publisher };
+  return { config, workspace, runner, renderer, carousel, providers, drafts, publisher, bluesky, xAdapter };
 }

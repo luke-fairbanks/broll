@@ -74,8 +74,7 @@ describe('BlueskyAdapter', () => {
   const draft: PostDraft = {
     id: 'dr_2',
     createdAt: new Date().toISOString(),
-    text: 'shipping day — https://broll.dev',
-    media: [],
+    posts: [{ text: 'shipping day — https://broll.dev', media: [] }],
     platforms: ['bluesky'],
     status: 'draft',
     results: {},
@@ -96,7 +95,7 @@ describe('BlueskyAdapter', () => {
         const body = JSON.parse(String(init?.body));
         expect(body.repo).toBe('did:plc:abc');
         expect(body.collection).toBe('app.bsky.feed.post');
-        expect(body.record.text).toBe(draft.text);
+        expect(body.record.text).toBe(draft.posts[0]!.text);
         expect(body.record.facets).toHaveLength(1);
         expect((init?.headers as Record<string, string>).Authorization).toBe('Bearer jwt');
         return new Response(JSON.stringify({ uri: 'at://did:plc:abc/app.bsky.feed.post/3kxyz', cid: 'cid123' }), {
@@ -107,11 +106,57 @@ describe('BlueskyAdapter', () => {
     });
 
     const adapter = new BlueskyAdapter(env, fetchMock as unknown as typeof fetch);
-    const result = await adapter.publish(draft, []);
+    const result = await adapter.publish(draft, [[]]);
 
     expect(calls).toHaveLength(2); // no blob upload for text-only
     expect(result.url).toBe('https://bsky.app/profile/broll.bsky.social/post/3kxyz');
     expect(result.remoteId).toBe('at://did:plc:abc/app.bsky.feed.post/3kxyz');
+    expect(result.postedSegments).toBe(1);
+  });
+
+  it('publishes threads with reply refs rooted at the first post', async () => {
+    const records: Array<Record<string, any>> = [];
+    let n = 0;
+    const fetchMock = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      const u = String(url);
+      if (u.endsWith('createSession')) {
+        return new Response(JSON.stringify({ accessJwt: 'jwt', did: 'did:plc:abc', handle: 'h.bsky.social' }), {
+          status: 200,
+        });
+      }
+      if (u.endsWith('createRecord')) {
+        const body = JSON.parse(String(init?.body));
+        records.push(body.record);
+        n += 1;
+        return new Response(JSON.stringify({ uri: `at://did:plc:abc/app.bsky.feed.post/rk${n}`, cid: `cid${n}` }), {
+          status: 200,
+        });
+      }
+      throw new Error(`unexpected: ${u}`);
+    });
+
+    const thread: PostDraft = {
+      ...draft,
+      posts: [
+        { text: 'one', media: [] },
+        { text: 'two', media: [] },
+        { text: 'three', media: [] },
+      ],
+    };
+    const adapter = new BlueskyAdapter(env, fetchMock as unknown as typeof fetch);
+    const result = await adapter.publish(thread, [[], [], []]);
+
+    expect(records[0]!.reply).toBeUndefined();
+    expect(records[1]!.reply).toEqual({
+      root: { uri: 'at://did:plc:abc/app.bsky.feed.post/rk1', cid: 'cid1' },
+      parent: { uri: 'at://did:plc:abc/app.bsky.feed.post/rk1', cid: 'cid1' },
+    });
+    expect(records[2]!.reply).toEqual({
+      root: { uri: 'at://did:plc:abc/app.bsky.feed.post/rk1', cid: 'cid1' },
+      parent: { uri: 'at://did:plc:abc/app.bsky.feed.post/rk2', cid: 'cid2' },
+    });
+    expect(result.remoteId).toBe('at://did:plc:abc/app.bsky.feed.post/rk1');
+    expect(result.postedSegments).toBe(3);
   });
 
   it('uploads image blobs and embeds them', async () => {
@@ -142,7 +187,10 @@ describe('BlueskyAdapter', () => {
     });
 
     const adapter = new BlueskyAdapter(env, fetchMock as unknown as typeof fetch);
-    await adapter.publish({ ...draft, text: 'with image' }, [{ path: imgPath, kind: 'image', sizeBytes: 100 }]);
+    await adapter.publish(
+      { ...draft, posts: [{ text: 'with image', media: [] }] },
+      [[{ path: imgPath, kind: 'image', sizeBytes: 100 }]],
+    );
     expect(fetchMock).toHaveBeenCalledTimes(3);
     rmSync(dir, { recursive: true, force: true });
   });
@@ -150,6 +198,6 @@ describe('BlueskyAdapter', () => {
   it('surfaces auth failures with the xrpc endpoint name', async () => {
     const fetchMock = vi.fn(async () => new Response('{"error":"AuthenticationRequired"}', { status: 401 }));
     const adapter = new BlueskyAdapter(env, fetchMock as unknown as typeof fetch);
-    await expect(adapter.publish(draft, [])).rejects.toThrow(/createSession.*401/s);
+    await expect(adapter.publish(draft, [[]])).rejects.toThrow(/createSession.*401/s);
   });
 });

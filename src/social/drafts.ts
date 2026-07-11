@@ -1,7 +1,14 @@
 import { existsSync, readdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import type { Workspace } from '../workspace.js';
-import { PostDraftSchema, type Platform, type PostDraft, type PublishResult } from './types.js';
+import {
+  liftLegacyDraft,
+  PostDraftSchema,
+  type Platform,
+  type PostDraft,
+  type PostSegment,
+  type PublishResult,
+} from './types.js';
 
 /**
  * The outbox. Drafts are plain JSON files a human can open, diff, and
@@ -15,13 +22,16 @@ export class DraftStore {
     return path.join(this.workspace.draftsDir, `${id}.json`);
   }
 
-  create(input: { text: string; media: string[]; platforms: Platform[] }): PostDraft {
+  private parse(json: string): PostDraft {
+    return PostDraftSchema.parse(liftLegacyDraft(JSON.parse(json)));
+  }
+
+  create(input: { posts: PostSegment[]; platforms: Platform[] }): PostDraft {
     const id = `dr_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
     const draft = PostDraftSchema.parse({
       id,
       createdAt: new Date().toISOString(),
-      text: input.text,
-      media: input.media,
+      posts: input.posts,
       platforms: input.platforms,
     });
     this.write(draft);
@@ -33,13 +43,13 @@ export class DraftStore {
     if (!existsSync(file)) {
       throw new Error(`No draft "${id}". Use list_drafts to see what exists.`);
     }
-    return PostDraftSchema.parse(JSON.parse(readFileSync(file, 'utf8')));
+    return this.parse(readFileSync(file, 'utf8'));
   }
 
   list(): PostDraft[] {
     return readdirSync(this.workspace.draftsDir)
       .filter((f) => f.endsWith('.json'))
-      .map((f) => PostDraftSchema.parse(JSON.parse(readFileSync(path.join(this.workspace.draftsDir, f), 'utf8'))))
+      .map((f) => this.parse(readFileSync(path.join(this.workspace.draftsDir, f), 'utf8')))
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }
 

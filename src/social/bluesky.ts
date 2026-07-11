@@ -84,7 +84,7 @@ export class BlueskyAdapter implements PlatformAdapter {
     return (await res.json()) as T;
   }
 
-  async publish(draft: PostDraft, media: ResolvedMedia[]): Promise<{ url?: string; remoteId?: string }> {
+  private async createSession(): Promise<{ auth: Record<string, string>; did: string; handle: string }> {
     const session = await this.xrpc<{ accessJwt: string; did: string; handle: string }>(
       'com.atproto.server.createSession',
       {
@@ -96,8 +96,10 @@ export class BlueskyAdapter implements PlatformAdapter {
         }),
       },
     );
-    const auth = { Authorization: `Bearer ${session.accessJwt}` };
+    return { auth: { Authorization: `Bearer ${session.accessJwt}` }, did: session.did, handle: session.handle };
+  }
 
+  private async uploadImages(auth: Record<string, string>, media: ResolvedMedia[]): Promise<unknown[]> {
     const images = media.filter((m) => m.kind === 'image').slice(0, 4);
     const blobs: unknown[] = [];
     for (const image of images) {
@@ -109,31 +111,110 @@ export class BlueskyAdapter implements PlatformAdapter {
       });
       blobs.push(uploaded.blob);
     }
+    return blobs;
+  }
 
-    const record: Record<string, unknown> = {
-      $type: 'app.bsky.feed.post',
-      text: draft.text,
-      createdAt: new Date().toISOString(),
-    };
-    const facets = detectLinkFacets(draft.text);
-    if (facets.length) record.facets = facets;
-    if (blobs.length) {
-      record.embed = {
-        $type: 'app.bsky.embed.images',
-        images: blobs.map((blob) => ({ image: blob, alt: '' })),
+  /** Multi-segment drafts publish as a reply-chained thread under the first post. */
+  async publish(
+    draft: PostDraft,
+    mediaPerSegment: ResolvedMedia[][],
+  ): Promise<{ url?: string; remoteId?: string; postedSegments?: number }> {
+    const { auth, did, handle } = await this.createSession();
+
+    let root: { uri: string; cid: string } | undefined;
+    let parent: { uri: string; cid: string } | undefined;
+    let posted = 0;
+
+    for (const [i, segment] of draft.posts.entries()) {
+      const blobs = await this.uploadImages(auth, mediaPerSegment[i] ?? []);
+
+      const record: Record<string, unknown> = {
+        $type: 'app.bsky.feed.post',
+        text: segment.text,
+        createdAt: new Date().toISOString(),
       };
+      const facets = detectLinkFacets(segment.text);
+      if (facets.length) record.facets = facets;
+      if (blobs.length) {
+        record.embed = {
+          $type: 'app.bsky.embed.images',
+          images: blobs.map((blob) => ({ image: blob, alt: '' })),
+        };
+      }
+      if (root && parent) {
+        record.reply = { root, parent };
+      }
+
+      try {
+        const created = await this.xrpc<{ uri: string; cid: string }>('com.atproto.repo.createRecord', {
+          method: 'POST',
+          headers: { ...auth, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ repo: did, collection: 'app.bsky.feed.post', record }),
+        });
+        posted += 1;
+        parent = { uri: created.uri, cid: created.cid };
+        root = root ?? parent;
+      } catch (error) {
+        if (root) {
+          // Partial thread: surface how far we got instead of losing that fact.
+          throw new Error(
+            `Thread broke at post ${i + 1}/${draft.posts.length} (${posted} published, root ${root.uri}): ${
+              error instanceof Error ? error.message : String(error)
+            }`,
+          );
+        }
+        throw error;
+      }
     }
 
-    const created = await this.xrpc<{ uri: string; cid: string }>('com.atproto.repo.createRecord', {
+    const rkey = root!.uri.split('/').pop();
+    return {
+      remoteId: root!.uri,
+      url: rkey ? `https://bsky.app/profile/${handle}/post/${rkey}` : undefined,
+      postedSegments: posted,
+    };
+  }
+
+  /** Update profile fields, merging with the existing record (never clobbers). */
+  async setProfile(fields: { displayName?: string; description?: string; avatarPath?: string }): Promise<void> {
+    const { auth, did } = await this.createSession();
+
+    const getRes = await this.fetchImpl(
+      `${this.service}/xrpc/com.atproto.repo.getRecord?repo=${did}&collection=app.bsky.actor.profile&rkey=self`,
+      { headers: auth },
+    );
+    const existing = getRes.ok ? ((await getRes.json()) as { value?: Record<string, unknown> }).value ?? {} : {};
+
+    const record: Record<string, unknown> = { ...existing, $type: 'app.bsky.actor.profile' };
+    if (fields.displayName !== undefined) record.displayName = fields.displayName;
+    if (fields.description !== undefined) record.description = fields.description;
+    if (fields.avatarPath) {
+      const { data, mime } = await fitImageToLimit(fields.avatarPath);
+      const uploaded = await this.xrpc<{ blob: unknown }>('com.atproto.repo.uploadBlob', {
+        method: 'POST',
+        headers: { ...auth, 'Content-Type': mime },
+        body: new Uint8Array(data),
+      });
+      record.avatar = uploaded.blob;
+    }
+
+    await this.xrpc('com.atproto.repo.putRecord', {
       method: 'POST',
       headers: { ...auth, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ repo: session.did, collection: 'app.bsky.feed.post', record }),
+      body: JSON.stringify({ repo: did, collection: 'app.bsky.actor.profile', rkey: 'self', record }),
     });
+  }
 
-    const rkey = created.uri.split('/').pop();
-    return {
-      remoteId: created.uri,
-      url: rkey ? `https://bsky.app/profile/${session.handle}/post/${rkey}` : undefined,
-    };
+  /** Cheap live credential check: can we open a session? */
+  async probe(): Promise<{ ok: boolean; detail: string }> {
+    try {
+      const { handle } = await this.createSession();
+      return { ok: true, detail: `session ok as ${handle}` };
+    } catch (error) {
+      return {
+        ok: false,
+        detail: `${error instanceof Error ? error.message : String(error)} — if you renamed your handle, update BLUESKY_IDENTIFIER.`,
+      };
+    }
   }
 }

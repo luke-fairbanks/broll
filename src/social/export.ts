@@ -18,20 +18,30 @@ export class ExportAdapter implements PlatformAdapter {
     return true;
   }
 
-  async publish(draft: PostDraft, media: ResolvedMedia[]): Promise<{ url?: string; remoteId?: string }> {
+  async publish(
+    draft: PostDraft,
+    mediaPerSegment: ResolvedMedia[][],
+  ): Promise<{ url?: string; remoteId?: string; postedSegments?: number }> {
     const dir = path.join(this.workspace.rendersDir, `${draft.id}-export`);
     mkdirSync(dir, { recursive: true });
-    writeFileSync(path.join(dir, 'text.txt'), draft.text, 'utf8');
-    const copied: string[] = [];
-    for (const [i, m] of media.entries()) {
-      const dest = path.join(dir, `media-${i + 1}${path.extname(m.path)}`);
-      copyFileSync(m.path, dest);
-      copied.push(dest);
+
+    const manifest: Array<{ text: string; media: string[] }> = [];
+    for (const [i, segment] of draft.posts.entries()) {
+      const prefix = draft.posts.length > 1 ? `post-${i + 1}-` : '';
+      writeFileSync(path.join(dir, `${prefix}text.txt`), segment.text, 'utf8');
+      const copied: string[] = [];
+      for (const [j, m] of (mediaPerSegment[i] ?? []).entries()) {
+        const dest = path.join(dir, `${prefix}media-${j + 1}${path.extname(m.path)}`);
+        copyFileSync(m.path, dest);
+        copied.push(dest);
+      }
+      manifest.push({ text: segment.text, media: copied });
     }
+
     writeFileSync(
       path.join(dir, 'post.json'),
-      JSON.stringify({ text: draft.text, media: copied, platforms: draft.platforms, draftId: draft.id }, null, 2),
+      JSON.stringify({ posts: manifest, platforms: draft.platforms, draftId: draft.id }, null, 2),
     );
-    return { url: dir, remoteId: draft.id };
+    return { url: dir, remoteId: draft.id, postedSegments: draft.posts.length };
   }
 }

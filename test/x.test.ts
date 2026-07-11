@@ -48,8 +48,7 @@ describe('XAdapter', () => {
   const draft: PostDraft = {
     id: 'dr_1',
     createdAt: new Date().toISOString(),
-    text: 'hello from broll',
-    media: [],
+    posts: [{ text: 'hello from broll', media: [] }],
     platforms: ['x'],
     status: 'draft',
     results: {},
@@ -71,14 +70,60 @@ describe('XAdapter', () => {
     });
 
     const adapter = new XAdapter(env, fetchMock as unknown as typeof fetch);
-    const result = await adapter.publish(draft, []);
+    const result = await adapter.publish(draft, [[]]);
     expect(result.url).toBe('https://x.com/i/status/1234567890');
+    expect(result.postedSegments).toBe(1);
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('publishes threads as reply chains rooted at the first tweet', async () => {
+    const bodies: Array<Record<string, unknown>> = [];
+    let nextId = 100;
+    const fetchMock = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) => {
+      bodies.push(JSON.parse(String(init?.body)));
+      nextId += 1;
+      return new Response(JSON.stringify({ data: { id: String(nextId) } }), { status: 201 });
+    });
+
+    const thread: PostDraft = {
+      ...draft,
+      posts: [
+        { text: 'part one', media: [] },
+        { text: 'part two', media: [] },
+        { text: 'part three', media: [] },
+      ],
+    };
+    const adapter = new XAdapter(env, fetchMock as unknown as typeof fetch);
+    const result = await adapter.publish(thread, [[], [], []]);
+
+    expect(bodies[0]!.reply).toBeUndefined();
+    expect(bodies[1]!.reply).toEqual({ in_reply_to_tweet_id: '101' });
+    expect(bodies[2]!.reply).toEqual({ in_reply_to_tweet_id: '102' });
+    expect(result.remoteId).toBe('101'); // thread root
+    expect(result.postedSegments).toBe(3);
+  });
+
+  it('reports how far a thread got when it breaks mid-chain', async () => {
+    let calls = 0;
+    const fetchMock = vi.fn(async () => {
+      calls += 1;
+      if (calls === 2) return new Response('{"detail":"rate limited"}', { status: 429 });
+      return new Response(JSON.stringify({ data: { id: String(calls) } }), { status: 201 });
+    });
+    const thread: PostDraft = {
+      ...draft,
+      posts: [
+        { text: 'a', media: [] },
+        { text: 'b', media: [] },
+      ],
+    };
+    const adapter = new XAdapter(env, fetchMock as unknown as typeof fetch);
+    await expect(adapter.publish(thread, [[], []])).rejects.toThrow(/broke at post 2\/2.*1 published/s);
   });
 
   it('surfaces API errors with status and body', async () => {
     const fetchMock = vi.fn(async () => new Response('{"detail":"Forbidden"}', { status: 403 }));
     const adapter = new XAdapter(env, fetchMock as unknown as typeof fetch);
-    await expect(adapter.publish(draft, [])).rejects.toThrow(/403.*Forbidden/s);
+    await expect(adapter.publish(draft, [[]])).rejects.toThrow(/403.*Forbidden/s);
   });
 });

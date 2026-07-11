@@ -118,27 +118,68 @@ export class XAdapter implements PlatformAdapter {
     return json.media_id_string;
   }
 
-  async publish(draft: PostDraft, media: ResolvedMedia[]): Promise<{ url?: string; remoteId?: string }> {
-    const images = media.filter((m) => m.kind === 'image').slice(0, 4);
-    const mediaIds: string[] = [];
-    for (const image of images) {
-      mediaIds.push(await this.uploadImage(image));
+  /** Multi-segment drafts publish as a reply-chained thread under the first tweet. */
+  async publish(
+    draft: PostDraft,
+    mediaPerSegment: ResolvedMedia[][],
+  ): Promise<{ url?: string; remoteId?: string; postedSegments?: number }> {
+    let rootId: string | undefined;
+    let previousId: string | undefined;
+    let posted = 0;
+
+    for (const [i, segment] of draft.posts.entries()) {
+      const images = (mediaPerSegment[i] ?? []).filter((m) => m.kind === 'image').slice(0, 4);
+      const mediaIds: string[] = [];
+      for (const image of images) {
+        mediaIds.push(await this.uploadImage(image));
+      }
+
+      const url = `${this.apiBase}/2/tweets`;
+      const body: Record<string, unknown> = { text: segment.text };
+      if (mediaIds.length) body.media = { media_ids: mediaIds };
+      if (previousId) body.reply = { in_reply_to_tweet_id: previousId };
+
+      const res = await this.fetchImpl(url, {
+        method: 'POST',
+        headers: { Authorization: this.authHeader('POST', url), 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const detail = `X create tweet failed (${res.status}): ${await readErrorBody(res)}`;
+        if (rootId) {
+          throw new Error(
+            `Thread broke at post ${i + 1}/${draft.posts.length} (${posted} published, root ${rootId}): ${detail}`,
+          );
+        }
+        throw new Error(detail);
+      }
+      const json = (await res.json()) as { data?: { id?: string } };
+      const id = json.data?.id;
+      if (!id) throw new Error('X returned no tweet id.');
+      posted += 1;
+      previousId = id;
+      rootId = rootId ?? id;
     }
 
-    const url = `${this.apiBase}/2/tweets`;
-    const body: Record<string, unknown> = { text: draft.text };
-    if (mediaIds.length) body.media = { media_ids: mediaIds };
+    return {
+      remoteId: rootId,
+      url: rootId ? `https://x.com/i/status/${rootId}` : undefined,
+      postedSegments: posted,
+    };
+  }
 
-    const res = await this.fetchImpl(url, {
-      method: 'POST',
-      headers: { Authorization: this.authHeader('POST', url), 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-    if (!res.ok) {
-      throw new Error(`X create tweet failed (${res.status}): ${await readErrorBody(res)}`);
+  /** Cheap live credential check: GET /2/users/me with a signed request. */
+  async probe(): Promise<{ ok: boolean; detail: string }> {
+    try {
+      const url = `${this.apiBase}/2/users/me`;
+      const res = await this.fetchImpl(url, { headers: { Authorization: this.authHeader('GET', url) } });
+      if (!res.ok) {
+        return { ok: false, detail: `X /2/users/me returned ${res.status}: ${await readErrorBody(res)}` };
+      }
+      const json = (await res.json()) as { data?: { username?: string } };
+      return { ok: true, detail: `authenticated as @${json.data?.username ?? 'unknown'}` };
+    } catch (error) {
+      return { ok: false, detail: error instanceof Error ? error.message : String(error) };
     }
-    const json = (await res.json()) as { data?: { id?: string } };
-    const id = json.data?.id;
-    return { remoteId: id, url: id ? `https://x.com/i/status/${id}` : undefined };
   }
 }

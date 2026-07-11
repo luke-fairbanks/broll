@@ -49,6 +49,7 @@ describe('broll MCP server', () => {
       [
         'broll_status',
         'create_post_draft',
+        'create_thread_draft',
         'extract_frame',
         'generate_image',
         'generate_video',
@@ -59,6 +60,7 @@ describe('broll MCP server', () => {
         'publish_post',
         'render_carousel',
         'render_video',
+        'set_profile',
       ].sort(),
     );
   });
@@ -103,10 +105,71 @@ describe('broll MCP server', () => {
     });
     const parsed = JSON.parse(textOf(result));
     expect(parsed.draft.status).toBe('draft');
+    expect(parsed.draft.posts).toHaveLength(1);
     expect(parsed.violations.some((v: { rule: string }) => v.rule === 'text-length')).toBe(true);
 
     const list = JSON.parse(textOf(await client.callTool({ name: 'list_drafts', arguments: {} })));
     expect(list.drafts.length).toBeGreaterThan(0);
+  });
+
+  it('creates thread drafts with per-segment validation messages', async () => {
+    const result = await client.callTool({
+      name: 'create_thread_draft',
+      arguments: {
+        posts: [{ text: 'fine first post' }, { text: 'a'.repeat(400) }],
+        platforms: ['bluesky'],
+      },
+    });
+    const parsed = JSON.parse(textOf(result));
+    expect(parsed.draft.posts).toHaveLength(2);
+    expect(parsed.violations).toHaveLength(1);
+    expect(parsed.violations[0].message).toContain('[post 2/2]');
+  });
+
+  it('publishes a platform subset and refuses to double-post on retry', async () => {
+    const draft = JSON.parse(
+      textOf(
+        await client.callTool({
+          name: 'create_post_draft',
+          arguments: { text: 'subset test', platforms: ['bluesky', 'export'] },
+        }),
+      ),
+    ).draft;
+
+    const first = JSON.parse(
+      textOf(
+        await client.callTool({
+          name: 'publish_post',
+          arguments: { draftId: draft.id, confirm: true, platforms: ['export'] },
+        }),
+      ),
+    );
+    expect(first.results.export.ok).toBe(true);
+    expect(first.results.bluesky).toBeUndefined(); // subset: bluesky untouched
+    expect(first.draft.status).toBe('partial');
+
+    const retry = await client.callTool({
+      name: 'publish_post',
+      arguments: { draftId: draft.id, confirm: true, platforms: ['export'] },
+    });
+    expect(retry.isError).toBe(true);
+    expect(textOf(retry)).toContain('refusing to double-post');
+  });
+
+  it('gates set_profile behind confirm and configuration', async () => {
+    const refused = await client.callTool({
+      name: 'set_profile',
+      arguments: { displayName: 'broll', confirm: false },
+    });
+    expect(refused.isError).toBe(true);
+    expect(textOf(refused)).toContain('confirm: true');
+
+    const unconfigured = await client.callTool({
+      name: 'set_profile',
+      arguments: { displayName: 'broll', confirm: true },
+    });
+    expect(unconfigured.isError).toBe(true);
+    expect(textOf(unconfigured)).toContain('BLUESKY_IDENTIFIER');
   });
 
   it('refuses to publish without confirm: true', async () => {

@@ -6,12 +6,12 @@
     "url": "https://github.com/luke-fairbanks/broll",
     "source": "github"
   },
-  "version": "0.1.0",
+  "version": "0.1.1",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "broll-mcp",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "transport": { "type": "stdio" },
       "environmentVariables": [
         { "name": "OPENAI_API_KEY", "description": "Optional: gpt-image-1 image generation", "isRequired": false, "isSecret": true },

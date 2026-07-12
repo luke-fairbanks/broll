@@ -9,7 +9,7 @@ import { RenderPlanSchema } from './render/plan.js';
 import { AssetKindSchema } from './workspace.js';
 import { PlatformSchema } from './social/types.js';
 
-const VERSION = '0.1.0';
+const VERSION = '0.1.1';
 
 type ToolResult = { content: Array<{ type: 'text'; text: string }>; isError?: boolean };
 

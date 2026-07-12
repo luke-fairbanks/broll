@@ -1,0 +1,7 @@
+# Official X OAuth documentation fixtures used by the test suite. These are
+# published examples, not account credentials.
+a6ec740a4faa255e2f3135470e6ff3e45787851f:test/x.test.ts:generic-api-key:25
+a6ec740a4faa255e2f3135470e6ff3e45787851f:test/x.test.ts:generic-api-key:26
+a6ec740a4faa255e2f3135470e6ff3e45787851f:test/x.test.ts:generic-api-key:27
+a6ec740a4faa255e2f3135470e6ff3e45787851f:test/x.test.ts:generic-api-key:28
+a6ec740a4faa255e2f3135470e6ff3e45787851f:test/x.test.ts:generic-api-key:34

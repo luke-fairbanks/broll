@@ -31,6 +31,14 @@ describe('charsPerLine', () => {
   it('never returns less than 8', () => {
     expect(charsPerLine(100, 500)).toBe(8);
   });
+
+  it('gives caps-heavy text fewer chars per line (caps run wider)', () => {
+    // Regression: "CLAUDE MCP ADD BROLL" overflowed a 1080px frame because
+    // the mixed-case glyph ratio underestimated all-caps width.
+    expect(charsPerLine(1080, 84, 0.9, 'CLAUDE MCP ADD BROLL')).toBeLessThan(
+      charsPerLine(1080, 84, 0.9, 'claude mcp add broll'),
+    );
+  });
 });
 
 describe('isFilterSafePath', () => {

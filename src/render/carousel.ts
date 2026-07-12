@@ -2,7 +2,7 @@ import sharp from 'sharp';
 import { z } from 'zod';
 import type { BrandKit } from '../config.js';
 import type { Workspace, AssetRecord } from '../workspace.js';
-import { wrapText } from './text.js';
+import { glyphRatio, wrapText } from './text.js';
 
 /**
  * Carousel slides, the workhorse of organic social. The layout is 100%
@@ -91,10 +91,10 @@ export function slideOverlaySvg(
   const footerSize = Math.round(width * 0.026);
 
   const headlineLines = slide.headline
-    ? wrapText(slide.headline, Math.max(8, Math.floor(contentWidth / (headlineSize * 0.52))))
+    ? wrapText(slide.headline, Math.max(8, Math.floor(contentWidth / (headlineSize * glyphRatio(slide.headline)))))
     : [];
   const bodyLines = slide.body
-    ? wrapText(slide.body, Math.max(8, Math.floor(contentWidth / (bodySize * 0.52))))
+    ? wrapText(slide.body, Math.max(8, Math.floor(contentWidth / (bodySize * glyphRatio(slide.body)))))
     : [];
 
   const headlineLineHeight = Math.round(headlineSize * 1.16);

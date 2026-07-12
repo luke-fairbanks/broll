@@ -7,10 +7,22 @@
  * paths contain no characters that need escaping.
  */
 
+/**
+ * Average glyph-width/font-size ratio for sans fonts. Caps-heavy text
+ * runs ~15% wider than mixed case — underestimating it makes headlines
+ * overflow the frame.
+ */
+export function glyphRatio(text?: string): number {
+  if (!text) return 0.55;
+  const letters = text.replace(/[^a-zA-Z]/g, '');
+  if (!letters.length) return 0.55;
+  const upper = letters.replace(/[^A-Z]/g, '').length / letters.length;
+  return upper >= 0.6 ? 0.64 : 0.55;
+}
+
 /** Estimate how many characters fit per line for a given width/font size. */
-export function charsPerLine(frameWidth: number, fontSize: number, usableRatio = 0.9): number {
-  // 0.55 is a conservative average glyph-width/font-size ratio for sans fonts.
-  return Math.max(8, Math.floor((frameWidth * usableRatio) / (fontSize * 0.55)));
+export function charsPerLine(frameWidth: number, fontSize: number, usableRatio = 0.9, text?: string): number {
+  return Math.max(8, Math.floor((frameWidth * usableRatio) / (fontSize * glyphRatio(text))));
 }
 
 /** Greedy word wrap. Words longer than a line are hard-split. */
@@ -44,7 +56,7 @@ export function wrapText(text: string, maxChars: number): string[] {
 }
 
 export function wrapForFrame(text: string, frameWidth: number, fontSize: number): string {
-  return wrapText(text, charsPerLine(frameWidth, fontSize)).join('\n');
+  return wrapText(text, charsPerLine(frameWidth, fontSize, 0.9, text)).join('\n');
 }
 
 /**

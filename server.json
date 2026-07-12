@@ -1,0 +1,29 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json",
+  "name": "io.github.luke-fairbanks/broll",
+  "description": "The content studio MCP for coding agents — BYO-key generation, deterministic video/carousel rendering, draft-first social publishing.",
+  "repository": {
+    "url": "https://github.com/luke-fairbanks/broll",
+    "source": "github"
+  },
+  "version": "0.1.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "broll-mcp",
+      "version": "0.1.0",
+      "transport": { "type": "stdio" },
+      "environmentVariables": [
+        { "name": "OPENAI_API_KEY", "description": "Optional: gpt-image-1 image generation", "isRequired": false, "isSecret": true },
+        { "name": "GEMINI_API_KEY", "description": "Optional: Imagen images + Veo video", "isRequired": false, "isSecret": true },
+        { "name": "BLUESKY_IDENTIFIER", "description": "Optional: Bluesky handle for live posting", "isRequired": false, "isSecret": false },
+        { "name": "BLUESKY_APP_PASSWORD", "description": "Optional: Bluesky app password", "isRequired": false, "isSecret": true },
+        { "name": "MASTODON_ACCESS_TOKEN", "description": "Optional: Mastodon app token for live posting", "isRequired": false, "isSecret": true },
+        { "name": "X_API_KEY", "description": "Optional: X consumer key (posting requires funded API credits)", "isRequired": false, "isSecret": true },
+        { "name": "X_API_SECRET", "description": "Optional: X consumer secret", "isRequired": false, "isSecret": true },
+        { "name": "X_ACCESS_TOKEN", "description": "Optional: X access token (Read and write)", "isRequired": false, "isSecret": true },
+        { "name": "X_ACCESS_TOKEN_SECRET", "description": "Optional: X access token secret", "isRequired": false, "isSecret": true }
+      ]
+    }
+  ]
+}

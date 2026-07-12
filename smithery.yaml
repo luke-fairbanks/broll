@@ -1,0 +1,29 @@
+# Smithery registry config — https://smithery.ai
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties:
+      OPENAI_API_KEY:
+        type: string
+        description: Optional — gpt-image-1 image generation (BYO key)
+      GEMINI_API_KEY:
+        type: string
+        description: Optional — Imagen images + Veo video (BYO key)
+      BLUESKY_IDENTIFIER:
+        type: string
+        description: Optional — Bluesky handle for live posting
+      BLUESKY_APP_PASSWORD:
+        type: string
+        description: Optional — Bluesky app password
+      MASTODON_ACCESS_TOKEN:
+        type: string
+        description: Optional — Mastodon application token
+  commandFunction: |-
+    (config) => ({
+      command: 'node',
+      args: ['dist/index.js'],
+      env: config
+    })
+build:
+  dockerBuildPath: .

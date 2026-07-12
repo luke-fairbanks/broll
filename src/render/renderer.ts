@@ -8,6 +8,7 @@ import { resolveFontFile } from './fonts.js';
 import { isFilterSafePath } from './text.js';
 import {
   compilePlan,
+  RenderPlanSchema,
   type CompiledRender,
   type RenderPlan,
   type ResolvedClip,
@@ -49,7 +50,10 @@ export class Renderer {
     return resolved;
   }
 
-  async render(plan: RenderPlan): Promise<RenderResult> {
+  async render(input: RenderPlan | unknown): Promise<RenderResult> {
+    // Parse unconditionally: library callers bypass the MCP tool schema,
+    // and unapplied defaults would leak `undefined` into the filtergraph.
+    const plan = RenderPlanSchema.parse(input);
     const resolved = await this.resolveClips(plan);
 
     const musicPath = plan.music ? this.workspace.resolvePath(plan.music.asset) : undefined;

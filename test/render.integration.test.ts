@@ -114,6 +114,18 @@ describe('Renderer (real ffmpeg)', () => {
       ),
     ).rejects.toThrow(/neither a known asset id nor an existing absolute path/);
   });
+
+  it('applies schema defaults when called as a library with a raw plan object', async () => {
+    // Regression: bypassing the MCP tool schema used to leak `undefined`
+    // into drawtext enable expressions.
+    const result = await renderer.render({
+      clips: [{ kind: 'color', color: '#101014', durationSec: 1 }],
+      overlays: [{ text: 'raw call' }], // no preset, no startSec
+      quality: 'draft',
+    });
+    expect(result.durationSec).toBeGreaterThan(0.8);
+    expect(result.filtergraph).not.toContain('undefined');
+  }, 120_000);
 });
 
 describe('MockProvider video (real ffmpeg)', () => {

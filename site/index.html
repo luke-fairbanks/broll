@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>broll — the content studio for coding agents</title>
+<meta name="description" content="broll is an MCP server that lets Claude Code and other coding agents generate media with your own API keys, render video and carousels deterministically with code, and publish behind a draft-first confirm gate.">
+<meta property="og:title" content="broll — the content studio for coding agents">
+<meta property="og:description" content="Your coding agent can render video now. BYO keys. Code-rendered. Draft-first.">
+<meta property="og:image" content="https://broll.dev/assets/slide-1.png">
+<link rel="icon" href="assets/icon-192.png">
+<style>
+  :root{--orange:#E4572E;--bg:#101014;--panel:#17171d;--line:#26262e;--text:#f4f4f5;--muted:#9ca3af;--mono:ui-monospace,'SF Mono',Menlo,monospace}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--text);font-family:-apple-system,'Helvetica Neue',Helvetica,Arial,sans-serif;line-height:1.6}
+  a{color:var(--orange);text-decoration:none}
+  .wrap{max-width:1060px;margin:0 auto;padding:0 24px}
+  nav{display:flex;justify-content:space-between;align-items:center;padding:22px 0}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:22px;color:var(--text)}
+  .logo img{width:34px;height:34px;border-radius:8px}
+  .logo b{color:var(--orange)}
+  nav .links a{color:var(--muted);margin-left:22px;font-size:15px}
+  nav .links a:hover{color:var(--text)}
+  .hero{display:grid;grid-template-columns:1.25fr .75fr;gap:48px;align-items:center;padding:64px 0 72px}
+  .hero h1{font-size:clamp(34px,5vw,54px);line-height:1.08;font-weight:800;letter-spacing:-1px}
+  .hero h1 span{color:var(--orange)}
+  .hero p.sub{color:var(--muted);font-size:19px;margin:20px 0 28px;max-width:34em}
+  .install{display:inline-flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:13px 18px;font-family:var(--mono);font-size:14.5px}
+  .install .dollar{color:var(--orange)}
+  .cta-row{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+  .gh{display:inline-block;border:1px solid var(--line);border-radius:10px;padding:13px 18px;color:var(--text);font-weight:600;font-size:15px}
+  .gh:hover{border-color:var(--orange)}
+  .phone{justify-self:center;width:min(240px,100%);border-radius:22px;overflow:hidden;border:1px solid var(--line);box-shadow:0 24px 60px rgba(0,0,0,.5)}
+  .phone video{display:block;width:100%}
+  .made{color:var(--muted);font-size:12.5px;text-align:center;margin-top:10px}
+  section{padding:56px 0;border-top:1px solid var(--line)}
+  h2{font-size:15px;letter-spacing:3px;color:var(--orange);font-weight:700;text-transform:uppercase;margin-bottom:10px}
+  h3.big{font-size:clamp(24px,3.4vw,34px);font-weight:800;letter-spacing:-.5px;margin-bottom:28px;max-width:22em}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px}
+  .card .num{color:var(--orange);font-family:var(--mono);font-size:13px;margin-bottom:8px}
+  .card h4{font-size:17px;margin-bottom:8px}
+  .card p{color:var(--muted);font-size:14.5px}
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:36px;align-items:center}
+  pre{background:#0b0b0e;border:1px solid var(--line);border-radius:14px;padding:20px;font-family:var(--mono);font-size:12.8px;line-height:1.55;overflow-x:auto;color:#c9d1d9}
+  pre .k{color:#79b8ff} pre .s{color:#9ecbff} pre .c{color:#6a737d}
+  .split img{width:100%;border-radius:14px;border:1px solid var(--line)}
+  .tools{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+  .tool{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 16px;font-family:var(--mono);font-size:13px}
+  .tool span{display:block;color:var(--muted);font-family:inherit;font-size:11.5px;margin-top:3px}
+  table{width:100%;border-collapse:collapse;font-size:14.5px}
+  th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line)}
+  th{color:var(--muted);font-weight:600;font-size:13px;letter-spacing:.5px}
+  .ok{color:#4ade80}.pay{color:#facc15}.soon{color:var(--muted)}
+  .safety{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--orange);border-radius:12px;padding:22px 26px;margin-top:8px}
+  .safety li{margin:6px 0 6px 18px;color:var(--muted)}
+  .safety li b{color:var(--text)}
+  footer{padding:44px 0 64px;border-top:1px solid var(--line);color:var(--muted);font-size:14px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+  @media(max-width:820px){.hero{grid-template-columns:1fr;padding-top:32px}.phone{order:-1;width:200px}.split{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav>
+    <div class="logo"><img src="assets/icon-192.png" alt="broll">broll<b>.</b></div>
+    <div class="links">
+      <a href="#how">how it works</a>
+      <a href="#tools">tools</a>
+      <a href="#platforms">platforms</a>
+      <a href="https://github.com/luke-fairbanks/broll">github</a>
+    </div>
+  </nav>
+
+  <div class="hero">
+    <div>
+      <h1>your coding agent can <span>render video</span> now.</h1>
+      <p class="sub">broll is an MCP server that gives Claude Code, Codex, and any MCP client a real content studio: generate media with <b>your own API keys</b>, render video &amp; carousels <b>deterministically with code</b>, and publish behind a <b>draft-first confirm gate</b>.</p>
+      <div class="cta-row">
+        <div class="install"><span class="dollar">$</span> claude mcp add broll -- npx -y broll-mcp</div>
+        <a class="gh" href="https://github.com/luke-fairbanks/broll">★ GitHub</a>
+      </div>
+    </div>
+    <div>
+      <div class="phone"><video src="assets/teaser.mp4" autoplay loop muted playsinline></video></div>
+      <p class="made">this video was rendered by broll, from a JSON plan, in one tool call</p>
+    </div>
+  </div>
+
+  <section id="how">
+    <h2>How it works</h2>
+    <h3 class="big">The model plans. Code renders. A human taps publish.</h3>
+    <div class="cards">
+      <div class="card"><div class="num">01</div><h4>Generate</h4><p>Images and clips via your own OpenAI or Gemini keys — no credit meters, no markup. A built-in mock provider keeps every workflow running before you add any keys.</p></div>
+      <div class="card"><div class="num">02</div><h4>Render</h4><p>Declarative JSON plans compile to exact ffmpeg invocations: clips, trims, burned-in captions, music beds, brand kits. Same plan in, same pixels out.</p></div>
+      <div class="card"><div class="num">03</div><h4>Draft</h4><p>Posts and threads become reviewable files, validated against each platform's real limits — grapheme counts, image sizes, media rules — before anything leaves your machine.</p></div>
+      <div class="card"><div class="num">04</div><h4>Publish</h4><p>One confirm posts to Bluesky, Mastodon, or X — including reply-chained threads — and reports per-platform results honestly. Nothing ever auto-posts.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Deterministic by design</h2>
+    <h3 class="big">When AI output drifts, the fix is moving it into code.</h3>
+    <div class="split">
+      <pre><span class="c">// the agent writes this…</span>
+{
+  <span class="k">"clips"</span>: [
+    { <span class="k">"kind"</span>: <span class="s">"color"</span>, <span class="k">"color"</span>: <span class="s">"#101014"</span>, <span class="k">"durationSec"</span>: 2 },
+    { <span class="k">"kind"</span>: <span class="s">"image"</span>, <span class="k">"asset"</span>: <span class="s">"ast_37d575"</span>, <span class="k">"durationSec"</span>: 3 }
+  ],
+  <span class="k">"overlays"</span>: [{ <span class="k">"text"</span>: <span class="s">"broll"</span>, <span class="k">"preset"</span>: <span class="s">"title"</span> }],
+  <span class="k">"captions"</span>: [
+    { <span class="k">"text"</span>: <span class="s">"rendered by code, not vibes"</span>,
+      <span class="k">"startSec"</span>: 0.4, <span class="k">"endSec"</span>: 2.0 }
+  ],
+  <span class="k">"aspect"</span>: <span class="s">"9:16"</span>
+}
+<span class="c">// …broll compiles it to one exact ffmpeg command.</span></pre>
+      <img src="assets/slide-1.png" alt="A branded carousel slide rendered by broll: layout, accent bar, page numbers all deterministic code">
+    </div>
+  </section>
+
+  <section id="tools">
+    <h2>Tool surface</h2>
+    <h3 class="big">Fifteen tools. Your agent already knows how to use them.</h3>
+    <div class="tools">
+      <div class="tool">broll_status<span>readiness + live credential probes</span></div>
+      <div class="tool">generate_image<span>BYO OpenAI / Gemini keys</span></div>
+      <div class="tool">generate_video<span>Veo, or keyless mock</span></div>
+      <div class="tool">render_video<span>RenderPlan → mp4 via ffmpeg</span></div>
+      <div class="tool">render_carousel<span>branded slide sets</span></div>
+      <div class="tool">extract_frame<span>agents visually QA their renders</span></div>
+      <div class="tool">import_asset · probe_asset · list_assets<span>workspace media</span></div>
+      <div class="tool">create_post_draft<span>validated, reviewable outbox files</span></div>
+      <div class="tool">create_thread_draft<span>reply-chained threads</span></div>
+      <div class="tool">publish_post<span>confirm-gated, per-platform results</span></div>
+      <div class="tool">set_profile<span>avatar / bio, merge-not-clobber</span></div>
+      <div class="tool">list_drafts<span>the outbox, inspectable</span></div>
+    </div>
+  </section>
+
+  <section id="platforms">
+    <h2>Platforms</h2>
+    <h3 class="big">Honest about the walls.</h3>
+    <table>
+      <tr><th>Platform</th><th>Status</th><th>Notes</th></tr>
+      <tr><td>Bluesky</td><td class="ok">● live</td><td>app password, five-minute setup — threads, images, link facets</td></tr>
+      <tr><td>Mastodon</td><td class="ok">● live</td><td>any instance, no app review — threads, images, video</td></tr>
+      <tr><td>X</td><td class="pay">● pay-per-use</td><td>X's API requires funded credits for writes (2026 pricing); broll posts if funded, else exports a ready-to-post bundle</td></tr>
+      <tr><td>Export bundle</td><td class="ok">● always</td><td>text + numbered media, ready to drag into any composer</td></tr>
+      <tr><td>LinkedIn · Instagram · YouTube</td><td class="soon">○ roadmap</td><td>app-review approvals in progress</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>Safety model</h2>
+    <h3 class="big">Built so an agent can't embarrass you.</h3>
+    <div class="safety">
+      <ul>
+        <li><b>Draft-first, always.</b> Nothing is published that isn't first a reviewable JSON file on disk.</li>
+        <li><b>Hard confirm gate.</b> <code>publish_post</code> requires <code>confirm: true</code> — agents are instructed to get your explicit go-ahead.</li>
+        <li><b>No silent truncation.</b> Constraint violations block publishing with instructions; your text is never auto-trimmed.</li>
+        <li><b>No double-posting.</b> Retrying a partly-published draft refuses platforms that already succeeded.</li>
+        <li><b>Your keys stay yours.</b> Read from env or <code>~/.broll/.env</code>, sent only to their own vendor, never logged, never proxied.</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>
+    <div>broll<b style="color:var(--orange)">.</b> — MIT licensed. Built in public, largely by the agent it serves.</div>
+    <div><a href="https://bsky.app/profile/brollapp.bsky.social">@brollapp.bsky.social</a> · <a href="https://github.com/luke-fairbanks/broll">github</a></div>
+  </footer>
+</div>
+</body>
+</html>

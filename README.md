@@ -62,6 +62,13 @@ npm run smoke
 
 drives the real server through a real MCP client: generates a background, renders a 3-slide carousel and a 9:16 teaser video with captions, extracts a QA frame, then drafts and "publishes" an export bundle — all into `./.broll/`.
 
+
+## broll cloud (waitlist)
+
+The local server you're looking at stays MIT and free. **broll cloud** adds the parts a local server can't do well: the app-review-walled platforms (Instagram, LinkedIn, TikTok) through broll's own approved credentials, schedules that run while your laptop is closed, and a swipe-to-approve inbox on your phone. ~$29/mo when it ships.
+
+**[Join the waitlist → 👍 issue #1](https://github.com/luke-fairbanks/broll/issues/1)** — subscribers get the launch note; comments set the platform build order.
+
 ## Safety model
 
 1. Nothing is published without a draft file on disk first.

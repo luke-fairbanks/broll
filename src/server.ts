@@ -32,7 +32,8 @@ async function guard(fn: () => Promise<ToolResult> | ToolResult): Promise<ToolRe
 
 export function buildServer(broll: Broll): McpServer {
   const server = new McpServer({ name: 'broll', version: VERSION });
-  const { workspace, renderer, carousel, providers, drafts, publisher, runner, config, bluesky, xAdapter } = broll;
+  const { workspace, renderer, carousel, providers, drafts, publisher, runner, config, bluesky, xAdapter, mastodon } =
+    broll;
 
   server.registerTool(
     'broll_status',
@@ -61,6 +62,7 @@ export function buildServer(broll: Broll): McpServer {
           const probes: Record<string, { ok: boolean; detail: string }> = {};
           if (bluesky.isConfigured()) probes.bluesky = await bluesky.probe();
           if (xAdapter.isConfigured()) probes.x = await xAdapter.probe();
+          if (mastodon.isConfigured()) probes.mastodon = await mastodon.probe();
           status.credentialProbes = Object.keys(probes).length
             ? probes
             : 'no live platforms configured — nothing to probe';

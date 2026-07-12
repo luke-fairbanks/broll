@@ -45,5 +45,13 @@
     "tsx": "^4.23.0",
     "typescript": "^7.0.2",
     "vitest": "^4.1.10"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/luke-fairbanks/broll.git"
+  },
+  "homepage": "https://github.com/luke-fairbanks/broll#readme",
+  "bugs": {
+    "url": "https://github.com/luke-fairbanks/broll/issues"
   }
 }

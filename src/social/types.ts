@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const PlatformSchema = z.enum(['bluesky', 'x', 'linkedin', 'export']);
+export const PlatformSchema = z.enum(['bluesky', 'x', 'mastodon', 'linkedin', 'export']);
 export type Platform = z.infer<typeof PlatformSchema>;
 
 export const PublishResultSchema = z.object({

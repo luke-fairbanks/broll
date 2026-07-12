@@ -34,6 +34,7 @@ Optional environment:
 | `OPENAI_API_KEY` | gpt-image-1 image generation |
 | `GEMINI_API_KEY` | Imagen images + Veo video generation |
 | `BLUESKY_IDENTIFIER` / `BLUESKY_APP_PASSWORD` | live Bluesky posting (use an app password) |
+| `MASTODON_ACCESS_TOKEN` (+ optional `MASTODON_INSTANCE`) | live Mastodon posting — no app review, any instance |
 | `X_API_KEY` / `X_API_SECRET` / `X_ACCESS_TOKEN` / `X_ACCESS_TOKEN_SECRET` | live X posting (free API tier works) |
 | `BROLL_HOME` | workspace location (default `~/.broll`) |
 | `BROLL_FFMPEG` / `BROLL_FFPROBE` | explicit binary paths |
@@ -70,11 +71,12 @@ drives the real server through a real MCP client: generates a background, render
 
 ## Status & roadmap
 
-Early but real: 74 tests including real-ffmpeg integration renders and a full MCP round trip.
+Early but real: 96 tests including real-ffmpeg integration renders and a full MCP round trip.
 
 - [ ] Bluesky video upload
 - [ ] X chunked video upload
 - [ ] LinkedIn adapter (needs app review)
+- [x] Mastodon adapter
 - [ ] YouTube Shorts via user OAuth
 - [ ] Ken Burns / crossfade transitions
 - [ ] Word-level caption timing from transcripts

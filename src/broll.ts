@@ -14,6 +14,7 @@ import { ProviderRegistry } from './providers/registry.js';
 import { BlueskyAdapter } from './social/bluesky.js';
 import { DraftStore } from './social/drafts.js';
 import { ExportAdapter } from './social/export.js';
+import { MastodonAdapter } from './social/mastodon.js';
 import { Publisher } from './social/publisher.js';
 import { XAdapter } from './social/x.js';
 import { Workspace } from './workspace.js';
@@ -33,6 +34,7 @@ export interface Broll {
   publisher: Publisher;
   bluesky: BlueskyAdapter;
   xAdapter: XAdapter;
+  mastodon: MastodonAdapter;
 }
 
 export function createBroll(config: BrollConfig, overrides: Partial<Broll> = {}): Broll {
@@ -50,8 +52,10 @@ export function createBroll(config: BrollConfig, overrides: Partial<Broll> = {})
   const drafts = overrides.drafts ?? new DraftStore(workspace);
   const bluesky = overrides.bluesky ?? new BlueskyAdapter(config.env);
   const xAdapter = overrides.xAdapter ?? new XAdapter(config.env);
+  const mastodon = overrides.mastodon ?? new MastodonAdapter(config.env);
   const publisher =
-    overrides.publisher ?? new Publisher(workspace, drafts, [bluesky, xAdapter, new ExportAdapter(workspace)]);
+    overrides.publisher ??
+    new Publisher(workspace, drafts, [bluesky, xAdapter, mastodon, new ExportAdapter(workspace)]);
 
-  return { config, workspace, runner, renderer, carousel, providers, drafts, publisher, bluesky, xAdapter };
+  return { config, workspace, runner, renderer, carousel, providers, drafts, publisher, bluesky, xAdapter, mastodon };
 }

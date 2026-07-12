@@ -70,7 +70,7 @@ describe('broll MCP server', () => {
     const status = JSON.parse(textOf(result));
     expect(status.ffmpeg).toContain('ffmpeg version');
     expect(status.providers.map((p: { name: string }) => p.name)).toEqual(['openai', 'gemini', 'mock']);
-    expect(status.platforms.map((p: { platform: string }) => p.platform)).toEqual(['bluesky', 'x', 'export']);
+    expect(status.platforms.map((p: { platform: string }) => p.platform)).toEqual(['bluesky', 'x', 'mastodon', 'export']);
     const bluesky = status.platforms.find((p: { platform: string }) => p.platform === 'bluesky');
     expect(bluesky.configured).toBe(false);
     expect(bluesky.configHelp).toContain('BLUESKY_IDENTIFIER');

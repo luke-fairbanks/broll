@@ -33,6 +33,15 @@ export const PLATFORM_RULES: Record<Platform, PlatformRules> = {
     imageMaxBytes: 5 * 1024 * 1024,
     videoMaxBytes: 512 * 1024 * 1024,
   },
+  mastodon: {
+    maxChars: 500,
+    charUnit: 'graphemes',
+    maxImages: 4,
+    maxVideos: 1,
+    imageMaxBytes: 16 * 1024 * 1024,
+    videoMaxBytes: 99 * 1024 * 1024,
+    notes: 'Limits are the mastodon.social defaults; some instances allow more.',
+  },
   linkedin: {
     maxChars: 3000,
     charUnit: 'graphemes',
